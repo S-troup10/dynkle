@@ -30,7 +30,15 @@
       "expo-status-bar",
       "expo-font",
       "expo-splash-screen",
-      "./plugins/withKioskLauncher"
+      "./plugins/withKioskLauncher",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "scheme": "dynkle",
     "experiments": {
