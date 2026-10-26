@@ -1,4 +1,4 @@
-import { Linking, Platform } from 'react-native';
+import { Linking, PermissionsAndroid, Platform, type Permission } from 'react-native';
 import { requireOptionalNativeModule } from 'expo';
 
 /**
@@ -76,9 +76,23 @@ const SIMULATED_NETWORKS: WifiNetwork[] = [
   { ssid: 'Office-5G', secured: true, level: 1 },
 ];
 
+/** WiFi scan results need location (≤ Android 12) or nearby-devices (13+) permission. */
+async function ensureScanPermission(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  const wanted = (
+    Number(Platform.Version) >= 33 ? ['android.permission.NEARBY_WIFI_DEVICES'] : [PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION]
+  ) as Permission[];
+  const result = await PermissionsAndroid.requestMultiple(wanted);
+  return wanted.every((p) => result[p] === PermissionsAndroid.RESULTS.GRANTED);
+}
+
 export const wifi = {
   native: !!wifiNative,
-  scan: async (): Promise<WifiNetwork[]> => (wifiNative ? wifiNative.scan() : SIMULATED_NETWORKS),
+  scan: async (): Promise<WifiNetwork[]> => {
+    if (!wifiNative) return SIMULATED_NETWORKS;
+    if (!(await ensureScanPermission())) return [];
+    return wifiNative.scan();
+  },
   connect: async (ssid: string, password: string | null) => (wifiNative ? wifiNative.connect(ssid, password) : true),
   currentSsid: () => (wifiNative ? wifiNative.currentSsid() : 'Shop WiFi'),
   openPanel: () => {

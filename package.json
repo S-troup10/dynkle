@@ -10,6 +10,8 @@
     "terminal": "npm run start -w @dynkle/terminal",
     "web": "npm run web -w @dynkle/terminal",
     "test": "npm test -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal",
-    "typecheck": "npm run typecheck -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal"
+    "typecheck": "npm run typecheck -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal",
+    "lint": "npm run lint -w @dynkle/terminal",
+    "e2e": "node e2e/web-flow.mjs"
   }
 }

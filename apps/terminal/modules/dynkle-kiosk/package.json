@@ -1,0 +1,6 @@
+{
+  "name": "dynkle-kiosk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pins the terminal app with Android lock task mode when it is the device owner."
+}

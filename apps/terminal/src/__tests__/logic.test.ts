@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import type { Item, PaymentSession } from '@dynkle/shared';
 import { addCustomLine, addItemLine, cartCount, cartTotal, changeQty, qtyOfItem, removeLine } from '@/state/cartLogic';
 import { checkoutView, confirmationSteps, shouldApply } from '@/state/checkoutLogic';

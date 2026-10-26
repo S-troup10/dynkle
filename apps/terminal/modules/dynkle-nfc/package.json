@@ -1,0 +1,6 @@
+{
+  "name": "dynkle-nfc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Serves the armed payment link to tapping phones via NFC host card emulation (NFC Forum Type 4 tag)."
+}

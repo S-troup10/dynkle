@@ -1,0 +1,103 @@
+# Dynkle
+
+Dynkle is the software for DYNK's crypto point-of-sale terminal. It's an Android app that runs in kiosk mode on a counter terminal with NFC, a camera, Bluetooth and WiFi. Merchants ring up a sale on the terminal, and customers pay in crypto on Solana by tapping their phone, scanning a QR code, or connecting with the DYNK app.
+
+This repo is **V1**. It contains the full terminal app and a **mock merchant dashboard**, so the whole flow can be tested in isolation.
+
+```
+apps/terminal      Expo (React Native) terminal app — Android kiosk + web preview
+apps/mock-server   Mock merchant dashboard: REST + WebSocket + /dev control panel
+packages/shared    Domain types, money/GST and catalog helpers shared by both
+design/            The terminal design (31 screens) the app is built from
+e2e/               Playwright walk-through of every flow against the web build
+```
+
+## Quick start
+
+```sh
+npm install
+npm run server        # mock dashboard on http://localhost:4000 (dev panel at /dev)
+npm run web           # terminal app in the browser on http://localhost:8081
+```
+
+To use it:
+
+1. Open the app at 400×800 to match the terminal screen.
+2. Go through onboarding until a pairing code appears.
+3. On http://localhost:4000/dev, click **Use** next to the code. The terminal pairs on its own.
+4. Ring up sales. The dev panel acts as the customer's wallet: connect, approve, decline or let the charge expire. It also acts as the dashboard: send a charge to the terminal, toggle tips, add menu items, push an update or unpair.
+
+### On an Android terminal or emulator
+
+```sh
+cd apps/terminal
+npx expo run:android                       # builds a dev client with the native modules
+EXPO_PUBLIC_API_URL=http://192.168.1.20:4000 npx expo start   # point at your machine's LAN IP
+```
+
+The emulator reaches the host at `http://10.0.2.2:4000` (the default). You can also change the dashboard address on the pairing screen (tap the "Dashboard: …" line) or under **Admin → Dashboard server**.
+
+## How the terminal works
+
+| Area | What it does |
+| --- | --- |
+| **Pairing** | The terminal requests a 6-character code (10-minute lifetime, refreshed automatically). It polls until the dashboard claims the code, then stores a device token. The production pairing protocol will replace this later. |
+| **Keypad** | Custom amounts, entered as cents (`00` key, delete). If there are already items in the order, the amount is added to it as a line. |
+| **Items** | Categories, groups and items with sizes, synced from the dashboard. Groups show up either as filter chips (Coffee) or as sub-categories (Food → Breads). A size picker opens for items with more than one size. The current order has steppers and shows the GST included (1/11). |
+| **Checkout** | Tip prompt (presets plus a custom amount; skipped when tips are off), then the charge is **armed**. While armed, the QR code, NFC tap and Connect chips are live, and the price is locked for 90 seconds. Then: customer confirming → processing on Solana → **Paid**, **Failed** (retry) or **Expired** (re-arm or edit the order). |
+| **Dashboard charges** | A charge sent from the dashboard pops up over whatever the merchant is doing, except during an active payment. Any amount already keyed in is kept and comes back afterwards. If the terminal was offline when the charge was sent, it is replayed when the terminal reconnects. |
+| **Activity** | Today's total and counts, the list of payments, and a detail view with a receipt QR. |
+| **Settings** | Business details, connection status (network, dashboard, NFC, Bluetooth) and terminal settings. **Admin settings** need the admin code (mock: `123456`) and lock again after 2 minutes. They cover restart, logs, forgetting networks, **managing items**, the dashboard server, unpairing and factory reset. |
+| **System states** | An offline banner (charging is disabled), "This terminal was unpaired" (when the dashboard removes it), and the software-update screen. |
+
+### Payment payload (QR and NFC)
+
+The mock server creates a payment session for each charge, and the payload has two layers:
+
+- **Inner layer:** `solanaPayUrl` is a Solana Pay transaction request: `solana:<url-encoded https://…/solana-pay/<id>>`. The mock server's `/solana-pay/:id` endpoint follows the spec. `GET` returns the label and icon. `POST {account}` returns a stub transaction and marks the customer's wallet as connected.
+- **Outer layer:** `qrUrl` is a DYNK universal link, `https://pay.dynk.io/p/<id>?r=<solanaPayUrl>`. The QR code and the NFC tag both carry this link. The DYNK app opens it directly, and a web fallback can hand the wrapped Solana Pay request to Phantom, Solflare or Backpack.
+
+On Android, `dynkle-nfc` emulates an NFC Forum Type 4 tag through host card emulation (HCE). It serves the link as an NDEF URI record, but only while a charge is armed, so phones read it like an NFC sticker.
+
+### Native modules (`apps/terminal/modules`)
+
+| Module | Purpose |
+| --- | --- |
+| `dynkle-nfc` | HCE `HostApduService` serving the armed payment link as an NDEF tag, and reporting NFC state for the Tap chip. |
+| `dynkle-kiosk` | Lock task mode, device-owner admin receiver, immersive mode and restart/reboot. The `plugins/withKioskLauncher.js` config plugin makes the app the HOME launcher. Setup is in [its README](apps/terminal/modules/dynkle-kiosk/README.md). |
+| `dynkle-wifi` | WiFi scan and join (device owner configures networks directly; otherwise it uses network suggestions or the WiFi panel), plus Bluetooth state. |
+
+In the web preview these fall back to simulated hardware. **Admin → Simulate tap failure** previews the "Tap unavailable" state.
+
+## Mock dashboard API
+
+These endpoints are what the real merchant dashboard needs to provide.
+
+| | |
+| --- | --- |
+| `POST /pairing/codes`, `GET /pairing/codes/:code` | Pairing code issue and poll (no auth) |
+| `POST /pairing/claim {code, tillName}` | Dashboard claims a code |
+| `GET /terminal/me`, `POST /terminal/unpair`, `POST /admin/verify` | Terminal profile, unpair and admin code check (bearer token) |
+| `GET/POST/PATCH/DELETE /catalog…` | Menu: categories (with groups) and items with sizes |
+| `POST /payments`, `GET /payments/:id`, `POST /payments/:id/cancel` | Payment sessions |
+| `GET /transactions` | Today's activity for the till |
+| `POST /remote-charges/:id/accept\|dismiss` | Answer a dashboard-sent charge |
+| `GET/POST /solana-pay/:id` | Solana Pay transaction request (stub) |
+| `WS /ws?token=` | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update` |
+| `/dev`, `POST /dev/…` | Control panel and scriptable simulators for tests |
+
+## Checks
+
+```sh
+npm test              # shared + mock server (Vitest) + terminal logic (Jest)
+npm run typecheck
+npm run lint -w @dynkle/terminal
+node e2e/web-flow.mjs # with server + web running; needs Playwright (SHOTS=dir saves screenshots)
+```
+
+## Not in V1
+
+- Bluetooth "DCAP" tap-to-connect (the **Connect** chip is wired up, and the dev panel simulates it)
+- Real Solana settlement and the real merchant dashboard (both are mocked)
+- The production pairing/connection protocol
+- Promo codes

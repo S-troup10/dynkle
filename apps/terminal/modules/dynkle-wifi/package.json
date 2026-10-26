@@ -1,0 +1,6 @@
+{
+  "name": "dynkle-wifi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WiFi scan/join for the terminal setup screen, plus Bluetooth radio state."
+}
