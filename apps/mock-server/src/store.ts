@@ -427,6 +427,13 @@ export class Store {
     return charge;
   }
 
+  /** Charges the dashboard sent that this till hasn't answered yet (replayed when it reconnects). */
+  pendingRemoteCharges(tillId: string): RemoteCharge[] {
+    return [...this.remoteCharges.values()]
+      .filter((c) => c.tillId === tillId && c.state === 'pending')
+      .map(({ tillId: _t, state: _s, ...wire }) => wire);
+  }
+
   acceptRemoteCharge(chargeId: string, tillId: string, baseUrl: string): PaymentSession {
     const c = this.remoteCharges.get(chargeId);
     if (!c || c.tillId !== tillId) throw new HttpError(404, 'Unknown remote charge');

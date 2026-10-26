@@ -208,3 +208,17 @@ describe('websocket', () => {
     expect(JSON.parse(msg).type).toBe('terminal.unpaired');
   });
 });
+
+describe('remote charge replay', () => {
+  it('re-sends unanswered remote charges when a terminal reconnects', async () => {
+    await pair();
+    await req('POST', '/dev/remote-charge', { amountCents: 3600, reference: 'Table 4' });
+    await built.app.listen({ port: 0, host: '127.0.0.1' });
+    const addr = built.app.server.address() as { port: number };
+    const ws = new WebSocket(`ws://127.0.0.1:${addr.port}/ws?token=${token}`);
+    const msg = await new Promise<string>((r) => ws.once('message', (m) => r(String(m))));
+    const event = JSON.parse(msg) as ServerEvent;
+    expect(event.type).toBe('remote_charge');
+    ws.close();
+  });
+});

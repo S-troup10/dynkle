@@ -1,6 +1,6 @@
 import type { Catalog, Category, Item, Merchant, TerminalSettings } from '@dynkle/shared';
 
-export const ADMIN_CODE = '1234';
+export const ADMIN_CODE = '123456';
 
 export const merchant: Merchant = {
   id: 'mer_dynkle_cafe',

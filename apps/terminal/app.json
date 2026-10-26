@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Dynkle",
+    "slug": "dynkle-terminal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "io.dynk.dynkle.terminal"
+    },
+    "android": {
+      "package": "io.dynk.dynkle.terminal",
+      "adaptiveIcon": {
+        "backgroundColor": "#FF8000",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      "expo-splash-screen"
+    ],
+    "scheme": "dynkle",
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

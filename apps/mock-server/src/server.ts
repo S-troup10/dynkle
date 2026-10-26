@@ -152,6 +152,9 @@ export async function buildServer(opts: ServerOptions = {}) {
     };
     store.events.on('event', listener);
     socket.on('close', () => store.events.off('event', listener));
+    for (const charge of store.pendingRemoteCharges(tillId)) {
+      socket.send(JSON.stringify({ type: 'remote_charge', charge } satisfies ServerEvent));
+    }
   });
 
   // ---------- Dev panel: stands in for the merchant dashboard and the customer's wallet ----------
