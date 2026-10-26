@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.expo/
+web-build/
+*.log
+.DS_Store
+apps/terminal/android/
+apps/terminal/ios/
+coverage/

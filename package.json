@@ -1,0 +1,15 @@
+{
+  "name": "dynkle",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "server": "npm run dev -w @dynkle/mock-server",
+    "terminal": "npm run start -w @dynkle/terminal",
+    "web": "npm run web -w @dynkle/terminal",
+    "test": "npm test -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal",
+    "typecheck": "npm run typecheck -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal"
+  }
+}
