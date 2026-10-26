@@ -1,0 +1,1 @@
+int xml dynkle_device_admin 0x0

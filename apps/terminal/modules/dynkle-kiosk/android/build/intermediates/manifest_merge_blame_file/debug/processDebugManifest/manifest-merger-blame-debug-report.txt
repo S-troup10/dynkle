@@ -1,0 +1,35 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="io.dynk.dynkle.kiosk" >
+4
+5    <uses-sdk android:minSdkVersion="24" />
+6
+7    <application>
+7-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:2:3-15:17
+8
+9        <!-- Lets `adb shell dpm set-device-owner` make Dynkle the device owner, which allows silent lock task mode. -->
+10        <receiver
+10-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:4:5-14:16
+11            android:name="io.dynk.dynkle.kiosk.DynkleAdminReceiver"
+11-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:5:7-62
+12            android:exported="true"
+12-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:6:7-30
+13            android:permission="android.permission.BIND_DEVICE_ADMIN" >
+13-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:7:7-64
+14            <meta-data
+14-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:8:7-10:55
+15                android:name="android.app.device_admin"
+15-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:9:9-48
+16                android:resource="@xml/dynkle_device_admin" />
+16-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:10:9-52
+17
+18            <intent-filter>
+18-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:11:7-13:23
+19                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+19-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:12:9-74
+19-->/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:12:17-71
+20            </intent-filter>
+21        </receiver>
+22    </application>
+23
+24</manifest>

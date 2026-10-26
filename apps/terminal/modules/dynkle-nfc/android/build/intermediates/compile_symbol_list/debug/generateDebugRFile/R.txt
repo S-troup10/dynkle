@@ -1,0 +1,2 @@
+int string dynkle_hce_description 0x0
+int xml dynkle_apduservice 0x0

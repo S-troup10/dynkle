@@ -1,0 +1,38 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:1:1-16:12
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:1:1-16:12
+	package
+		INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:1:11-69
+application
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:2:3-15:17
+receiver#io.dynk.dynkle.kiosk.DynkleAdminReceiver
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:4:5-14:16
+	android:exported
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:6:7-30
+	android:permission
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:7:7-64
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:5:7-62
+meta-data#android.app.device_admin
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:8:7-10:55
+	android:resource
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:10:9-52
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:9:9-48
+intent-filter#action:name:android.app.action.DEVICE_ADMIN_ENABLED
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:11:7-13:23
+action#android.app.action.DEVICE_ADMIN_ENABLED
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:12:9-74
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml:12:17-71
+uses-sdk
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/AndroidManifest.xml

@@ -42,7 +42,7 @@ class DynkleKioskModule : Module() {
     }
 
     Function("start") {
-      val activity = appContext.currentActivity ?: return@Function
+      val activity = appContext.currentActivity ?: return@Function null
       if (isOwner()) {
         dpm.setLockTaskPackages(admin, arrayOf(context.packageName))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -65,7 +65,7 @@ class DynkleKioskModule : Module() {
     }
 
     Function("stop") {
-      val activity = appContext.currentActivity ?: return@Function
+      val activity = appContext.currentActivity ?: return@Function null
       if (isOwner()) dpm.setStatusBarDisabled(admin, false)
       activity.runOnUiThread {
         activity.stopLockTask()
@@ -76,7 +76,7 @@ class DynkleKioskModule : Module() {
     Function("restart") {
       if (isOwner()) {
         dpm.reboot(admin)
-        return@Function
+        return@Function null
       }
       // Not device owner: relaunch the app instead of rebooting the terminal.
       val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {

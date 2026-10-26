@@ -1,0 +1,56 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:1:1-11:12
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:1:1-11:12
+	package
+		INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:1:11-69
+uses-permission#android.permission.ACCESS_WIFI_STATE
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:2:3-74
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:2:20-71
+uses-permission#android.permission.CHANGE_WIFI_STATE
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:3:3-74
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:3:20-71
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:4:3-77
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:4:20-74
+uses-permission#android.permission.ACCESS_FINE_LOCATION
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:6:3-77
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:6:20-74
+uses-permission#android.permission.NEARBY_WIFI_DEVICES
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:7:3-123
+	android:usesPermissionFlags
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:7:74-120
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:7:20-73
+uses-permission#android.permission.BLUETOOTH
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:8:3-93
+	android:maxSdkVersion
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:8:64-90
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:8:20-63
+uses-feature#android.hardware.wifi
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:9:3-81
+	android:required
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:9:54-78
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:9:17-53
+uses-feature#android.hardware.bluetooth
+ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:10:3-86
+	android:required
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:10:59-83
+	android:name
+		ADDED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml:10:17-58
+uses-sdk
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml
+INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /home/user/dynkle/apps/terminal/modules/dynkle-wifi/android/src/main/AndroidManifest.xml
