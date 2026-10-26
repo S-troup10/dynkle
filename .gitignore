@@ -7,3 +7,6 @@ web-build/
 apps/terminal/android/
 apps/terminal/ios/
 coverage/
+apps/terminal/modules/*/android/build/
+.gradle/
+.kotlin/

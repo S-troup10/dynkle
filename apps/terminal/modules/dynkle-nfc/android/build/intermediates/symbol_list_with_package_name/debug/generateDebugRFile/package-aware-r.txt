@@ -1,3 +1,0 @@
-io.dynk.dynkle.nfc
-string dynkle_hce_description
-xml dynkle_apduservice

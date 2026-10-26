@@ -1,2 +1,0 @@
-/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/java/io/dynk/dynkle/kiosk/DynkleKioskModule.kt
-/home/user/dynkle/apps/terminal/modules/dynkle-kiosk/android/src/main/java/io/dynk/dynkle/kiosk/DynkleAdminReceiver.kt

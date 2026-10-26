@@ -1,2 +1,0 @@
-io.dynk.dynkle.kiosk
-xml dynkle_device_admin
