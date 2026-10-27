@@ -31,11 +31,12 @@ To use it:
 
 ```sh
 cd apps/terminal
-npx expo run:android                       # builds a dev client with the native modules
-EXPO_PUBLIC_API_URL=http://192.168.1.20:4000 npx expo start   # point at your machine's LAN IP
+npx expo run:android --variant release     # standalone build with the native modules
 ```
 
-The emulator reaches the host at `http://10.0.2.2:4000` (the default). You can also change the dashboard address on the pairing screen (tap the "Dashboard: …" line) or under **Admin → Dashboard server**.
+The app connects to the hosted mock dashboard at **https://dynkle-mock.onrender.com** by default. Pair from https://dynkle-mock.onrender.com/dev (the password is `DEV_PASSWORD` in Render).
+
+To use a local server instead, build with `EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:4000`. You can also change the dashboard address on the pairing screen (tap the "Dashboard: …" line) or under **Admin → Dashboard server**.
 
 ## How the terminal works
 
