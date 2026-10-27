@@ -16,8 +16,11 @@ const API = process.env.API_URL ?? 'http://localhost:4000';
 const SHOTS = process.env.SHOTS;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
+// Hosted mock dashboards protect /dev with a password (DEV_PASSWORD on Render).
+const devAuth = process.env.DEV_PASSWORD ? { authorization: `Basic ${Buffer.from(`e2e:${process.env.DEV_PASSWORD}`).toString('base64')}` } : {};
+const devState = async () => (await fetch(`${API}/dev/state`, { headers: devAuth })).json();
 const dev = async (path, body = {}) => {
-  const r = await fetch(`${API}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetch(`${API}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...devAuth }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error(`${path} -> ${r.status} ${await r.text()}`);
   return r.json();
 };
@@ -156,7 +159,7 @@ await page.reload();
 await page.goto(`${APP}/keypad`);
 await id('keypad-charge').waitFor();
 await keys('840');
-const { tills } = await (await fetch(`${API}/dev/state`)).json();
+const { tills } = await devState();
 await dev('/dev/remote-charge', { tillId: tills.at(-1).id, amountCents: 3600, reference: 'Table 4' });
 await id('accept-remote').waitFor();
 await shot('remote-charge');
@@ -228,7 +231,7 @@ await shot('update');
 await id('keypad-charge').waitFor({ timeout: 15_000 });
 step('software update screen');
 
-const state = await (await fetch(`${API}/dev/state`)).json();
+const state = await devState();
 await dev(`/dev/tills/${state.tills.at(-1).id}/unpair`);
 await id('pair-again').waitFor({ timeout: 10_000 });
 await shot('unpaired');

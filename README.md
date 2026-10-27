@@ -86,6 +86,30 @@ These endpoints are what the real merchant dashboard needs to provide.
 | `WS /ws?token=` | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update` |
 | `/dev`, `POST /dev/…` | Control panel and scriptable simulators for tests |
 
+## Deploy the mock dashboard (Render)
+
+This deploys the mock dashboard so the terminal can reach it over the internet, with no server running on your own computer.
+
+1. Push this branch, then in [Render](https://dashboard.render.com) go to **New → Blueprint**. Pick this repo and branch, then **Apply**. Render builds the `Dockerfile` described in `render.yaml`.
+2. When it's live, open **dynkle-mock → Environment** and copy `DEV_PASSWORD`. It's generated for you.
+3. Open `https://<your-service>.onrender.com/dev`. The browser asks for a login: the username can be anything, and the password is `DEV_PASSWORD`.
+4. Point the terminal at the hosted dashboard in one of two ways:
+   - At build time: put `EXPO_PUBLIC_API_URL=https://<your-service>.onrender.com` in `apps/terminal/.env.local`, then build (`npx expo run:android --variant release`).
+   - In the app: tap **Dashboard: …** on the pairing screen, or go to **Admin → Dashboard server**.
+
+The terminal API, `/ws` and `/solana-pay` stay open. Only `/dev` needs the password. Payment links use `https://` automatically behind Render's proxy.
+
+**On the free plan:**
+- The service sleeps after about 15 minutes with no traffic, and the first request after that takes about 30 seconds.
+- Data lives in memory, so every restart or redeploy wipes it. Terminals then show "This terminal was unpaired", and you pair them again.
+
+The $7/month Starter plan stays awake.
+
+Vercel won't work: it only runs short-lived serverless functions, and the mock needs a long-running process for WebSockets, in-memory state and the price-lock timers.
+
+To run the e2e walk-through against the hosted dashboard:
+`API_URL=https://<your-service>.onrender.com DEV_PASSWORD=… node e2e/web-flow.mjs`, with the web app running locally.
+
 ## Checks
 
 ```sh

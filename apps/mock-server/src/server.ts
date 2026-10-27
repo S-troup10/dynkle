@@ -9,11 +9,14 @@ export interface ServerOptions extends StoreOptions {
   logger?: boolean;
   /** Overrides the base URL used in Solana Pay links (defaults to the request host). */
   publicUrl?: string;
+  /** When set, /dev and /dev/* (the dashboard + wallet simulator) need HTTP Basic auth with this password. */
+  devPassword?: string;
 }
 
 export async function buildServer(opts: ServerOptions = {}) {
   const store = new Store(opts);
-  const app = Fastify({ logger: opts.logger ?? false });
+  // trustProxy: behind Render/other proxies, build links from X-Forwarded-Proto/Host so they come out as https.
+  const app = Fastify({ logger: opts.logger ?? false, trustProxy: true });
   await app.register(cors, { origin: true, methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'] });
   await app.register(websocket);
 
@@ -24,7 +27,20 @@ export async function buildServer(opts: ServerOptions = {}) {
     reply.status(status).send({ error: err.message });
   });
 
-  const baseUrl = (req: FastifyRequest) => opts.publicUrl ?? `${req.protocol}://${req.headers.host}`;
+  const baseUrl = (req: FastifyRequest) => opts.publicUrl ?? `${req.protocol}://${req.host}`;
+
+  if (opts.devPassword) {
+    const expected = opts.devPassword;
+    app.addHook('onRequest', async (req, reply) => {
+      const path = req.url.split('?')[0];
+      if (path !== '/dev' && !path.startsWith('/dev/')) return;
+      const header = req.headers.authorization ?? '';
+      const given = header.startsWith('Basic ') ? Buffer.from(header.slice(6), 'base64').toString() : '';
+      // Any username; only the password is checked.
+      if (given.slice(given.indexOf(':') + 1) === expected && given.includes(':')) return;
+      reply.header('WWW-Authenticate', 'Basic realm="Dynkle dev"').code(401).send({ error: 'Dev panel password required' });
+    });
+  }
   const bearer = (req: FastifyRequest) => {
     const h = req.headers.authorization;
     return h?.startsWith('Bearer ') ? h.slice(7) : undefined;

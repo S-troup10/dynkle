@@ -222,3 +222,38 @@ describe('remote charge replay', () => {
     ws.close();
   });
 });
+
+describe('hosting', () => {
+  it('password-protects the dev panel but not the terminal API', async () => {
+    await built.app.close();
+    built = await buildServer({ devPassword: 'sesame', seedActivity: false });
+    expect((await req('GET', '/dev/state', undefined, false)).status).toBe(401);
+    expect((await req('GET', '/dev', undefined, false)).status).toBe(401);
+    const ok = await built.app.inject({
+      method: 'GET',
+      url: '/dev/state',
+      headers: { authorization: `Basic ${Buffer.from('any:sesame').toString('base64')}` },
+    });
+    expect(ok.statusCode).toBe(200);
+    const wrong = await built.app.inject({
+      method: 'GET',
+      url: '/dev/state',
+      headers: { authorization: `Basic ${Buffer.from('any:nope').toString('base64')}` },
+    });
+    expect(wrong.statusCode).toBe(401);
+    expect((await req('GET', '/health', undefined, false)).status).toBe(200);
+    expect((await req('POST', '/pairing/codes', undefined, false)).status).toBe(200);
+  });
+
+  it('builds https links behind a TLS-terminating proxy', async () => {
+    await pair();
+    const res = await built.app.inject({
+      method: 'POST',
+      url: '/payments',
+      payload: { lines: [], subtotalCents: 500, tipCents: 0 },
+      headers: { authorization: `Bearer ${token}`, host: 'dynkle-mock.onrender.com', 'x-forwarded-proto': 'https' },
+    });
+    const p = res.json() as PaymentSession;
+    expect(decodeURIComponent(p.solanaPayUrl)).toBe(`solana:https://dynkle-mock.onrender.com/solana-pay/${p.id}`);
+  });
+});

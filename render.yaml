@@ -1,0 +1,16 @@
+# Render Blueprint: New → Blueprint → pick this repo → Apply.
+services:
+  - type: web
+    name: dynkle-mock
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Password for /dev (dashboard + wallet simulator). Find it under the service's Environment tab.
+      - key: DEV_PASSWORD
+        generateValue: true
+      - key: SEED_ACTIVITY
+        value: "1"
