@@ -75,15 +75,7 @@ export interface OrderLine {
   qty: number;
 }
 
-export type PaymentStatus =
-  | 'armed'
-  | 'wallet_connected'
-  | 'approved'
-  | 'confirming'
-  | 'paid'
-  | 'failed'
-  | 'expired'
-  | 'cancelled';
+export type PaymentStatus = 'armed' | 'wallet_connected' | 'approved' | 'confirming' | 'paid' | 'failed' | 'expired' | 'cancelled';
 
 export const FINAL_STATUSES: PaymentStatus[] = ['paid', 'failed', 'expired', 'cancelled'];
 

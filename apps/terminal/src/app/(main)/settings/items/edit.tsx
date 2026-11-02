@@ -35,8 +35,16 @@ export default function EditItem() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const crumbs = catalog && catId ? categoryPath(catalog, catId).map((c) => c.name).join(' · ') : '';
-  const valid = name.trim().length > 0 && sizes.length > 0 && sizes.every((s) => s.name.trim() && toCents(s.price) >= 0 && !Number.isNaN(toCents(s.price)));
+  const crumbs =
+    catalog && catId
+      ? categoryPath(catalog, catId)
+          .map((c) => c.name)
+          .join(' · ')
+      : '';
+  const valid =
+    name.trim().length > 0 &&
+    sizes.length > 0 &&
+    sizes.every((s) => s.name.trim() && toCents(s.price) >= 0 && !Number.isNaN(toCents(s.price)));
 
   const save = async () => {
     touchAdmin();
@@ -108,7 +116,12 @@ export default function EditItem() {
                   testID={`size-price-${i}`}
                 />
               </View>
-              <RoundButton name="close" size={36} label={`Remove size ${i + 1}`} onPress={() => setSizes((all) => all.filter((_, j) => j !== i))} />
+              <RoundButton
+                name="close"
+                size={36}
+                label={`Remove size ${i + 1}`}
+                onPress={() => setSizes((all) => all.filter((_, j) => j !== i))}
+              />
             </View>
           ))}
           <Button

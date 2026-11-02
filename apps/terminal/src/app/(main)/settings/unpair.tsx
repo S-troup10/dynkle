@@ -30,8 +30,8 @@ export default function UnpairConfirm() {
         <IconBadge name="unlink" tone="redTint" size={60} />
         <Text style={s.title}>Unpair this terminal?</Text>
         <T style={{ fontSize: 15, lineHeight: 23 }}>
-          {profile?.till.name} will be removed from {profile?.merchant.name}. It can’t take payments until it’s paired again with a
-          new code. Your sales history stays in the dashboard.
+          {profile?.till.name} will be removed from {profile?.merchant.name}. It can’t take payments until it’s paired again with a new
+          code. Your sales history stays in the dashboard.
         </T>
         {error ? <T style={{ color: colors.red }}>{error}</T> : null}
       </View>

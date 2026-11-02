@@ -69,11 +69,7 @@ export default function CategoryScreen() {
                   key={item.id}
                   onPress={() => open(item)}
                   testID={`item-${item.name}`}
-                  style={({ pressed }) => [
-                    s.row,
-                    i > 0 && s.divider,
-                    (inOrder > 0 || pressed) && { backgroundColor: colors.orangeTint },
-                  ]}
+                  style={({ pressed }) => [s.row, i > 0 && s.divider, (inOrder > 0 || pressed) && { backgroundColor: colors.orangeTint }]}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={s.name}>{item.name}</Text>

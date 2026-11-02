@@ -55,7 +55,13 @@ export default function Tip() {
         </View>
         <View style={{ paddingHorizontal: 20, paddingBottom: 20, gap: 12 }}>
           <Keypad onKey={(k) => setCustom((c) => keypadPress(c, k))} keyHeight={60} />
-          <Button title={`Add ${formatMoney(custom)} tip`} disabled={custom <= 0} loading={busy} onPress={() => arm(custom)} testID="custom-tip-add" />
+          <Button
+            title={`Add ${formatMoney(custom)} tip`}
+            disabled={custom <= 0}
+            loading={busy}
+            onPress={() => arm(custom)}
+            testID="custom-tip-add"
+          />
           <Button title="Back" kind="ghost" onPress={() => setSelected(null)} />
         </View>
       </Screen>

@@ -23,9 +23,7 @@ export function confirmationSteps(status: PaymentStatus): { label: string; state
   const approved = status === 'approved' || status === 'confirming' || status === 'paid';
   return [
     { label: 'Wallet connected', state: 'done' },
-    approved
-      ? { label: 'Customer approved', state: 'done' }
-      : { label: 'Waiting for customer to approve', state: 'active' },
+    approved ? { label: 'Customer approved', state: 'done' } : { label: 'Waiting for customer to approve', state: 'active' },
     { label: 'Confirming on Solana', state: status === 'paid' ? 'done' : approved ? 'active' : 'todo' },
   ];
 }

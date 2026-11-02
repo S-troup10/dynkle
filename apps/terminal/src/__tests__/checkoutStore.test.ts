@@ -40,7 +40,10 @@ describe('checkout store', () => {
     // (Clearing state here counts as finishing the sale and drops the saved copy, so write it back.)
     useCheckout.setState({ payment: null, draft: null });
     await flush();
-    await AsyncStorage.setItem('dynkle.checkout', JSON.stringify({ paymentId: 'pay_1', tipCents: 315, draft: { lines: [], subtotalCents: 2100, source: 'terminal' } }));
+    await AsyncStorage.setItem(
+      'dynkle.checkout',
+      JSON.stringify({ paymentId: 'pay_1', tipCents: 315, draft: { lines: [], subtotalCents: 2100, source: 'terminal' } }),
+    );
     mocked.getPayment.mockResolvedValue(payment({ status: 'paid' }));
     expect(await useCheckout.getState().restore()).toBe(true);
     expect(useCheckout.getState().payment?.status).toBe('paid');
@@ -48,7 +51,10 @@ describe('checkout store', () => {
   });
 
   it('forgets a saved sale that ended while the app was down', async () => {
-    await AsyncStorage.setItem('dynkle.checkout', JSON.stringify({ paymentId: 'pay_1', tipCents: 0, draft: { lines: [], subtotalCents: 2100, source: 'terminal' } }));
+    await AsyncStorage.setItem(
+      'dynkle.checkout',
+      JSON.stringify({ paymentId: 'pay_1', tipCents: 0, draft: { lines: [], subtotalCents: 2100, source: 'terminal' } }),
+    );
     mocked.getPayment.mockResolvedValue(payment({ status: 'expired' }));
     expect(await useCheckout.getState().restore()).toBe(false);
     expect(await AsyncStorage.getItem('dynkle.checkout')).toBeNull();

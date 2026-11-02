@@ -172,7 +172,5 @@ export function IconBadge({
 
 /** Halo ring around a status badge (failed, expired, paid). */
 export function Halo({ children, color, size = 100 }: { children: ReactNode; color: string; size?: number }) {
-  return (
-    <View style={[styles.center, { width: size, height: size, borderRadius: size / 2, backgroundColor: color }]}>{children}</View>
-  );
+  return <View style={[styles.center, { width: size, height: size, borderRadius: size / 2, backgroundColor: color }]}>{children}</View>;
 }

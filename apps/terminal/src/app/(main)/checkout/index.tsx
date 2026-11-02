@@ -29,7 +29,12 @@ export default function Checkout() {
     if (payment?.status === 'cancelled') backToSelling();
   }, [payment?.status]);
 
-  if (!payment) return <Screen><View /></Screen>;
+  if (!payment)
+    return (
+      <Screen>
+        <View />
+      </Screen>
+    );
 
   switch (checkoutView(payment.status)) {
     case 'armed':
@@ -45,6 +50,10 @@ export default function Checkout() {
     case 'expired':
       return <Expired payment={payment} />;
     default:
-      return <Screen><View /></Screen>;
+      return (
+        <Screen>
+          <View />
+        </Screen>
+      );
   }
 }

@@ -65,10 +65,7 @@ export function Button({
       ) : (
         <>
           {icon ? <Icon name={icon} size={20} color={disabled ? colors.muted : (k.text.color as string)} /> : null}
-          <Text
-            maxFontSizeMultiplier={MAX_FONT_SCALE}
-            style={[styles.buttonText, k.text, disabled && { color: 'rgba(33,35,32,0.45)' }]}
-          >
+          <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[styles.buttonText, k.text, disabled && { color: 'rgba(33,35,32,0.45)' }]}>
             {title}
           </Text>
           {trailingArrow ? <Icon name="arrowRight" size={18} color={k.text.color as string} /> : null}
@@ -107,11 +104,7 @@ export function IconButton({
       testID={testID}
       accessibilityLabel={label}
       accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.iconButton,
-        { width: size, height: size },
-        pressed && { backgroundColor: colors.orangeTint },
-      ]}
+      style={({ pressed }) => [styles.iconButton, { width: size, height: size }, pressed && { backgroundColor: colors.orangeTint }]}
     >
       <Icon name={name} size={20} />
     </Pressable>
@@ -139,11 +132,7 @@ export function RoundButton({
       testID={testID}
       accessibilityLabel={label}
       accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.round,
-        { width: size, height: size },
-        pressed && { backgroundColor: colors.orangeTint },
-      ]}
+      style={({ pressed }) => [styles.round, { width: size, height: size }, pressed && { backgroundColor: colors.orangeTint }]}
     >
       <Icon name={name} size={size * 0.42} strokeWidth={2.4} />
     </Pressable>

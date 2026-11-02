@@ -14,10 +14,7 @@ module.exports = function withKioskLauncher(config) {
     if (!filters.some(isHome)) {
       filters.push({
         action: [{ $: { 'android:name': 'android.intent.action.MAIN' } }],
-        category: [
-          { $: { 'android:name': 'android.intent.category.HOME' } },
-          { $: { 'android:name': 'android.intent.category.DEFAULT' } },
-        ],
+        category: [{ $: { 'android:name': 'android.intent.category.HOME' } }, { $: { 'android:name': 'android.intent.category.DEFAULT' } }],
       });
     }
     return cfg;

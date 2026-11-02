@@ -56,5 +56,12 @@ const s = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   small: { fontFamily: fonts.body, fontSize: 13, color: 'rgba(255,255,255,0.75)' },
   pct: { fontFamily: fonts.display, fontSize: 13, color: colors.white },
-  brand: { fontFamily: fonts.display, fontSize: 16, letterSpacing: 3, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 24 },
+  brand: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    letterSpacing: 3,
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
 });

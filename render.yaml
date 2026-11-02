@@ -16,7 +16,7 @@ services:
       - key: TOKEN_SECRET
         generateValue: true
       - key: SEED_ACTIVITY
-        value: "1"
+        value: '1'
       # Optional: save everything (menu edits, payments) to a file. Needs a Render disk (paid plans),
       # e.g. mount one at /data and set DATA_FILE=/data/store.json.
       # - key: DATA_FILE

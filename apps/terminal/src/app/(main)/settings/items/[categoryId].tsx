@@ -110,11 +110,7 @@ export default function ManageCategory() {
         <Button
           title="Delete category"
           kind="ghost"
-          onPress={() =>
-            confirmDelete(category.name, () =>
-              run(() => api.deleteCategory(category.id)).then(() => router.back()),
-            )
-          }
+          onPress={() => confirmDelete(category.name, () => run(() => api.deleteCategory(category.id)).then(() => router.back()))}
           style={{ marginTop: 16 }}
         />
       </ScrollView>

@@ -64,24 +64,48 @@ export default function Admin() {
             })}
             testID="admin-send-logs"
           />
-          <Row icon="menu" label="View logs" sub="What the terminal has been doing" chevron onPress={act(() => router.push('/settings/logs'))} testID="view-logs" />
+          <Row
+            icon="menu"
+            label="View logs"
+            sub="What the terminal has been doing"
+            chevron
+            onPress={act(() => router.push('/settings/logs'))}
+            testID="view-logs"
+          />
           <Row
             icon="wifi"
             label="Forget saved networks"
             sub="Clears WiFi passwords"
             chevron
-            onPress={act(() => confirm('Forget saved networks?', 'The terminal will stay on its current connection until it restarts.', 'Forget', () => wifi.forgetAll()))}
+            onPress={act(() =>
+              confirm('Forget saved networks?', 'The terminal will stay on its current connection until it restarts.', 'Forget', () =>
+                wifi.forgetAll(),
+              ),
+            )}
           />
         </List>
 
         <SectionLabel>MENU</SectionLabel>
         <List>
-          <Row icon="items" label="Manage items" sub="Add or edit categories, items and sizes" chevron onPress={act(() => router.push('/settings/items'))} testID="manage-items" />
+          <Row
+            icon="items"
+            label="Manage items"
+            sub="Add or edit categories, items and sizes"
+            chevron
+            onPress={act(() => router.push('/settings/items'))}
+            testID="manage-items"
+          />
         </List>
 
         <SectionLabel>DEVELOPER</SectionLabel>
         <List>
-          <Row icon="server" label="Dashboard server" sub={useSession.getState().apiUrl} chevron onPress={act(() => router.push('/settings/server'))} />
+          <Row
+            icon="server"
+            label="Dashboard server"
+            sub={useSession.getState().apiUrl}
+            chevron
+            onPress={act(() => router.push('/settings/server'))}
+          />
           {kiosk.available ? (
             <Row
               icon="unlock"
@@ -143,6 +167,14 @@ export default function Admin() {
 
 const s = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingBottom: 30 },
-  lock: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.orangeTint, borderRadius: 999, paddingHorizontal: 12, height: 30 },
+  lock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.orangeTint,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    height: 30,
+  },
   lockText: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.orangeDeep },
 });

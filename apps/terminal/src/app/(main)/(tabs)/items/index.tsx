@@ -41,7 +41,14 @@ export default function Menu() {
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 20, marginTop: 4, marginBottom: 12 },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 12,
+  },
   title: { fontFamily: fonts.display, fontSize: 26, color: colors.ink },
   content: { paddingHorizontal: 20, paddingBottom: 110 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },

@@ -33,12 +33,7 @@ const cat = (id: string, name: string, sort: number, parentId: string | null = n
 });
 
 let n = 0;
-const item = (
-  categoryId: string,
-  name: string,
-  prices: Array<[string, number]>,
-  group?: string,
-): Item => {
+const item = (categoryId: string, name: string, prices: Array<[string, number]>, group?: string): Item => {
   const id = `itm_${++n}`;
   return {
     id,
@@ -76,7 +71,15 @@ export function seedCatalog(): Catalog {
     item('cat_coffee', 'Cappuccino', sml(480, 550, 620), 'Milk coffee'),
     item('cat_coffee', 'Mocha', sml(530, 600, 670), 'Specialty'),
     item('cat_coffee', 'Chai latte', sml(500, 570, 640), 'Specialty'),
-    item('cat_coffee', 'Long black', [['Small', 420], ['Large', 520]], 'Black'),
+    item(
+      'cat_coffee',
+      'Long black',
+      [
+        ['Small', 420],
+        ['Large', 520],
+      ],
+      'Black',
+    ),
     item('cat_coffee', 'Espresso', one(380), 'Black'),
     item('cat_coffee', 'Magic', one(520), 'Milk coffee'),
     item('cat_coffee', 'Piccolo', one(450), 'Milk coffee'),
@@ -85,20 +88,47 @@ export function seedCatalog(): Catalog {
     item('cat_tea', 'Peppermint', sml(450, 500, 550)),
     item('cat_tea', 'Green tea', sml(450, 500, 550)),
     item('cat_tea', 'Chamomile', sml(450, 500, 550)),
-    item('cat_tea', 'Iced tea', [['Regular', 550], ['Large', 650]]),
-    item('cat_cold', 'Iced latte', [['Regular', 600], ['Large', 700]]),
-    item('cat_cold', 'Iced long black', [['Regular', 550], ['Large', 650]]),
-    item('cat_cold', 'Cold brew', [['Regular', 600], ['Large', 700]]),
+    item('cat_tea', 'Iced tea', [
+      ['Regular', 550],
+      ['Large', 650],
+    ]),
+    item('cat_cold', 'Iced latte', [
+      ['Regular', 600],
+      ['Large', 700],
+    ]),
+    item('cat_cold', 'Iced long black', [
+      ['Regular', 550],
+      ['Large', 650],
+    ]),
+    item('cat_cold', 'Cold brew', [
+      ['Regular', 600],
+      ['Large', 700],
+    ]),
     item('cat_cold', 'Iced chocolate', one(700)),
     item('cat_cold', 'Milkshake', one(800)),
     item('cat_cold', 'Sparkling water', one(400)),
     item('cat_cold', 'Lemonade', one(450)),
     item('cat_cold', 'Kombucha', one(600)),
-    item('cat_juice', 'Orange', [['Regular', 700], ['Large', 850]]),
-    item('cat_juice', 'Apple', [['Regular', 700], ['Large', 850]]),
-    item('cat_juice', 'Green', [['Regular', 800], ['Large', 950]]),
-    item('cat_juice', 'Watermelon', [['Regular', 750], ['Large', 900]]),
-    item('cat_juice', 'Carrot & ginger', [['Regular', 750], ['Large', 900]]),
+    item('cat_juice', 'Orange', [
+      ['Regular', 700],
+      ['Large', 850],
+    ]),
+    item('cat_juice', 'Apple', [
+      ['Regular', 700],
+      ['Large', 850],
+    ]),
+    item('cat_juice', 'Green', [
+      ['Regular', 800],
+      ['Large', 950],
+    ]),
+    item('cat_juice', 'Watermelon', [
+      ['Regular', 750],
+      ['Large', 900],
+    ]),
+    item('cat_juice', 'Carrot & ginger', [
+      ['Regular', 750],
+      ['Large', 900],
+    ]),
     item('cat_food_breads', 'Banana bread', one(550)),
     item('cat_food_breads', 'Sourdough toast', one(800)),
     item('cat_food_sandwiches', 'Ham & cheese toastie', one(1200)),

@@ -1,15 +1,11 @@
 import type { Catalog, Category, Item } from './types';
 
 export function childCategories(catalog: Catalog, parentId: string | null): Category[] {
-  return catalog.categories
-    .filter((c) => c.parentId === parentId)
-    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+  return catalog.categories.filter((c) => c.parentId === parentId).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 }
 
 export function itemsIn(catalog: Catalog, categoryId: string): Item[] {
-  return catalog.items
-    .filter((i) => i.categoryId === categoryId)
-    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
+  return catalog.items.filter((i) => i.categoryId === categoryId).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 }
 
 /** Subtitle on a category tile: "9 items" or, for a category of sub-groups, "3 groups". */

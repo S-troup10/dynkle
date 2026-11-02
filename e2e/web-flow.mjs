@@ -17,10 +17,16 @@ const SHOTS = process.env.SHOTS;
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 // Hosted mock dashboards protect /dev with a password (DEV_PASSWORD on Render).
-const devAuth = process.env.DEV_PASSWORD ? { authorization: `Basic ${Buffer.from(`e2e:${process.env.DEV_PASSWORD}`).toString('base64')}` } : {};
+const devAuth = process.env.DEV_PASSWORD
+  ? { authorization: `Basic ${Buffer.from(`e2e:${process.env.DEV_PASSWORD}`).toString('base64')}` }
+  : {};
 const devState = async () => (await fetch(`${API}/dev/state`, { headers: devAuth })).json();
 const dev = async (path, body = {}) => {
-  const r = await fetch(`${API}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...devAuth }, body: JSON.stringify(body) });
+  const r = await fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...devAuth },
+    body: JSON.stringify(body),
+  });
   if (!r.ok) throw new Error(`${path} -> ${r.status} ${await r.text()}`);
   return r.json();
 };
@@ -65,7 +71,9 @@ await id('network-connect').waitFor();
 await shot('network');
 await id('network-connect').click();
 const codeEl = id('pairing-code');
-await page.waitForFunction(() => /^[A-Z2-9]{6}$/.test(document.querySelector('[data-testid="pairing-code"]')?.getAttribute('aria-label') ?? ''));
+await page.waitForFunction(() =>
+  /^[A-Z2-9]{6}$/.test(document.querySelector('[data-testid="pairing-code"]')?.getAttribute('aria-label') ?? ''),
+);
 const code = await codeEl.getAttribute('aria-label');
 await shot('pairing-code');
 await dev('/dev/pairing/claim', { code, tillName: 'Till 2' });

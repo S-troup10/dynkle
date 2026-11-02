@@ -56,7 +56,14 @@ export default function ManageItems() {
       <View style={{ padding: 20 }}>
         <Button title="Add category" icon="plus" onPress={() => setAdding(true)} testID="add-category" />
       </View>
-      <PromptDialog visible={adding} title="New category" placeholder="e.g. Specials" confirm="Add" onSubmit={add} onCancel={() => setAdding(false)} />
+      <PromptDialog
+        visible={adding}
+        title="New category"
+        placeholder="e.g. Specials"
+        confirm="Add"
+        onSubmit={add}
+        onCancel={() => setAdding(false)}
+      />
     </Screen>
   );
 }

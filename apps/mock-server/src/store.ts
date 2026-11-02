@@ -622,9 +622,7 @@ export class Store {
 
   /** Charges the dashboard sent that this till hasn't answered yet (replayed when it reconnects). */
   pendingRemoteCharges(tillId: string): RemoteCharge[] {
-    return [...this.remoteCharges.values()]
-      .filter((c) => c.tillId === tillId && c.state === 'pending')
-      .map(toWire);
+    return [...this.remoteCharges.values()].filter((c) => c.tillId === tillId && c.state === 'pending').map(toWire);
   }
 
   acceptRemoteCharge(chargeId: string, tillId: string, baseUrl: string): PaymentSession {

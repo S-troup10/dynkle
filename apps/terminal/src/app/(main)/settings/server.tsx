@@ -17,7 +17,10 @@ export default function Server() {
     <Screen>
       <BackHeader title="Dashboard server" />
       <View style={{ paddingHorizontal: 20, gap: 14 }}>
-        <T>The mock merchant dashboard this terminal talks to. On a real terminal use your computer’s LAN address, e.g. http://192.168.1.20:4000.</T>
+        <T>
+          The mock merchant dashboard this terminal talks to. On a real terminal use your computer’s LAN address, e.g.
+          http://192.168.1.20:4000.
+        </T>
         <Card>
           <TextInput value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false} style={s.input} />
         </Card>

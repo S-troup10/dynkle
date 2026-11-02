@@ -142,7 +142,12 @@ describe('request validation', () => {
     const bad = await call<{ error: string }>('POST', '/payments', { subtotalCents: 'lots' }, auth(token));
     expect(bad.status).toBe(400);
     expect(bad.json.error).toMatch(/^subtotalCents:/);
-    const badItem = await call<{ error: string }>('POST', '/catalog/items', { categoryId: 'cat_coffee', name: 'X', variants: [{ priceCents: '1' }] }, auth(token));
+    const badItem = await call<{ error: string }>(
+      'POST',
+      '/catalog/items',
+      { categoryId: 'cat_coffee', name: 'X', variants: [{ priceCents: '1' }] },
+      auth(token),
+    );
     expect(badItem.status).toBe(400);
     expect(badItem.json.error).toMatch(/^variants\.0\.priceCents:/);
     expect((await call('POST', '/pairing/claim', {})).status).toBe(400);

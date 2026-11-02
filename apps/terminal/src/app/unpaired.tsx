@@ -14,12 +14,18 @@ export default function Unpaired() {
         <T style={s.copy}>It was removed from {merchant}, so it can’t take payments. Pair it again to start selling.</T>
       </View>
       <View style={{ padding: 20, gap: 14 }}>
-        <Button title="Pair again" trailingArrow onPress={() => {
+        <Button
+          title="Pair again"
+          trailingArrow
+          onPress={() => {
             useSession.getState().forget();
             setTimeout(() => router.replace('/pair'), 0);
           }}
-          testID="pair-again" />
-        <T v="small" style={{ textAlign: 'center' }}>Didn’t expect this? Check Devices in your dashboard.</T>
+          testID="pair-again"
+        />
+        <T v="small" style={{ textAlign: 'center' }}>
+          Didn’t expect this? Check Devices in your dashboard.
+        </T>
       </View>
     </Screen>
   );

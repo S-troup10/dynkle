@@ -44,12 +44,7 @@ export function NetworkPicker({ value, onChange }: { value: NetworkSelection; on
         {(['wifi', 'mobile'] as const).map((m) => {
           const on = value.mode === m;
           return (
-            <Pressable
-              key={m}
-              onPress={() => onChange({ ...value, mode: m })}
-              style={[s.segBtn, on && s.segOn]}
-              testID={`net-${m}`}
-            >
+            <Pressable key={m} onPress={() => onChange({ ...value, mode: m })} style={[s.segBtn, on && s.segOn]} testID={`net-${m}`}>
               <Icon name={m === 'wifi' ? 'wifi' : 'sim'} size={18} color={on ? colors.white : colors.ink} strokeWidth={2} />
               <Text style={[s.segText, on && { color: colors.white }]}>{m === 'wifi' ? 'WiFi' : 'Mobile data'}</Text>
             </Pressable>

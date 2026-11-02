@@ -72,13 +72,7 @@ const ICONS = {
       <Path d="M12 9l6 6M18 9l-6 6" />
     </>
   ),
-  keypad: (
-    <>
-      {[5, 11, 17].flatMap((cy) =>
-        [6, 12, 18].map((cx) => <Circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />),
-      )}
-    </>
-  ),
+  keypad: <>{[5, 11, 17].flatMap((cy) => [6, 12, 18].map((cx) => <Circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />))}</>,
   items: (
     <>
       <Rect x="3" y="3" width="7" height="7" rx="1.5" />

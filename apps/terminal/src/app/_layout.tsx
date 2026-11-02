@@ -4,11 +4,7 @@ import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import {
-  Orbitron_600SemiBold,
-  Orbitron_700Bold,
-  Orbitron_800ExtraBold,
-} from '@expo-google-fonts/orbitron';
+import { Orbitron_600SemiBold, Orbitron_700Bold, Orbitron_800ExtraBold } from '@expo-google-fonts/orbitron';
 import { Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold } from '@expo-google-fonts/outfit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NetInfo from '@react-native-community/netinfo';
@@ -105,20 +101,20 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <ErrorBoundary>
-        <StatusBar style="dark" hidden={Platform.OS === 'android'} />
-        <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
-          <Stack.Protected guard={phase === 'onboarding'}>
-            <Stack.Screen name="(onboarding)" />
-          </Stack.Protected>
-          <Stack.Protected guard={phase === 'unpaired'}>
-            <Stack.Screen name="unpaired" />
-          </Stack.Protected>
-          <Stack.Protected guard={phase === 'paired'}>
-            <Stack.Screen name="(main)" />
-            <Stack.Screen name="update" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
-          </Stack.Protected>
-        </Stack>
-        {phase === 'paired' ? <RemoteChargeOverlay /> : null}
+          <StatusBar style="dark" hidden={Platform.OS === 'android'} />
+          <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
+            <Stack.Protected guard={phase === 'onboarding'}>
+              <Stack.Screen name="(onboarding)" />
+            </Stack.Protected>
+            <Stack.Protected guard={phase === 'unpaired'}>
+              <Stack.Screen name="unpaired" />
+            </Stack.Protected>
+            <Stack.Protected guard={phase === 'paired'}>
+              <Stack.Screen name="(main)" />
+              <Stack.Screen name="update" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
+            </Stack.Protected>
+          </Stack>
+          {phase === 'paired' ? <RemoteChargeOverlay /> : null}
         </ErrorBoundary>
       </SafeAreaProvider>
     </QueryClientProvider>

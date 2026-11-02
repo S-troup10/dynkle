@@ -51,13 +51,7 @@ export default function Intro() {
       </View>
       <View style={{ flex: 1 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {width > 0 ? (
-          <ScrollView
-            ref={scroller}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={onScrollEnd}
-          >
+          <ScrollView ref={scroller} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={onScrollEnd}>
             {STEPS.map((st, i) => (
               <View key={i} style={{ width, paddingHorizontal: 24 }}>
                 <View style={s.art}>{st.art}</View>
@@ -161,7 +155,15 @@ const a = StyleSheet.create({
   miniPillText: { fontFamily: fonts.body, fontSize: 9, color: colors.ink },
   amount: { fontFamily: fonts.displayHeavy, fontSize: 30, color: colors.ink },
   keys: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  key: { width: '31%', flexGrow: 1, height: 34, borderRadius: 8, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  key: {
+    width: '31%',
+    flexGrow: 1,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   keyText: { fontFamily: fonts.display, fontSize: 13, color: colors.ink },
   charge: { height: 38, borderRadius: 999, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' },
   chargeText: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.white },

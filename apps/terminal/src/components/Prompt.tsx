@@ -39,7 +39,13 @@ export function PromptDialog({
           />
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Button title="Cancel" kind="secondary" style={{ flex: 1, height: 50 }} onPress={onCancel} />
-            <Button title={confirm} style={{ flex: 1, height: 50 }} disabled={!value.trim()} onPress={() => onSubmit(value.trim())} testID="prompt-ok" />
+            <Button
+              title={confirm}
+              style={{ flex: 1, height: 50 }}
+              disabled={!value.trim()}
+              onPress={() => onSubmit(value.trim())}
+              testID="prompt-ok"
+            />
           </View>
         </View>
       </View>

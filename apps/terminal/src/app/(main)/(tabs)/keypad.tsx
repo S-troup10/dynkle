@@ -53,11 +53,7 @@ export default function KeypadScreen() {
         <Keypad onKey={(k) => useCart.getState().setKeypad(keypadPress(cents, k))} />
         <Button
           title={
-            offline
-              ? 'Charge unavailable offline'
-              : inOrder > 0
-                ? `Add ${formatMoney(cents)} to order`
-                : `Charge ${formatMoney(cents)}`
+            offline ? 'Charge unavailable offline' : inOrder > 0 ? `Add ${formatMoney(cents)} to order` : `Charge ${formatMoney(cents)}`
           }
           onPress={charge}
           disabled={offline || cents <= 0}

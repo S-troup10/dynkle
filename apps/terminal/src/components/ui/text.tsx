@@ -2,7 +2,8 @@ import { Text, type TextProps, type TextStyle } from 'react-native';
 import { colors, fonts } from '@/theme';
 import { MAX_FONT_SCALE } from './styles';
 
-export type TextVariant = 'display' | 'title' | 'heading' | 'amount' | 'amountSm' | 'body' | 'bodyStrong' | 'label' | 'small' | 'eyebrow' | 'mono';
+export type TextVariant =
+  'display' | 'title' | 'heading' | 'amount' | 'amountSm' | 'body' | 'bodyStrong' | 'label' | 'small' | 'eyebrow' | 'mono';
 
 export const textVariants: Record<TextVariant, TextStyle> = {
   display: { fontFamily: fonts.displayHeavy, fontSize: 64, lineHeight: 70, letterSpacing: -1.5, color: colors.ink },
@@ -38,7 +39,12 @@ export function Headline({ children, accent, size = 30, center }: { children?: s
       }}
     >
       {children}
-      {accent ? <Text style={{ color: colors.orange }}>{children ? ' ' : ''}{accent}</Text> : null}
+      {accent ? (
+        <Text style={{ color: colors.orange }}>
+          {children ? ' ' : ''}
+          {accent}
+        </Text>
+      ) : null}
     </Text>
   );
 }

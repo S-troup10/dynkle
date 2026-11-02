@@ -100,9 +100,7 @@ export default function Pair() {
           ) : (
             <View style={s.statusRow}>
               <View style={s.orangeDot} />
-              <Text style={s.status}>
-                Waiting for dashboard · new code in {formatCountdown(left)}
-              </Text>
+              <Text style={s.status}>Waiting for dashboard · new code in {formatCountdown(left)}</Text>
             </View>
           )}
         </View>
@@ -174,7 +172,14 @@ function ConnectionFooter() {
 
 const s = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingBottom: 24 },
-  codeCard: { backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 24, padding: 14, gap: 14, borderWidth: 1, borderColor: colors.hairline },
+  codeCard: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 24,
+    padding: 14,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
   codeRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   tile: {
     width: 46,
@@ -189,7 +194,15 @@ const s = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   orangeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.orange, borderWidth: 2, borderColor: colors.orangeGlow },
   status: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
-  stepNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  stepNum: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
   stepNumText: { fontFamily: fonts.display, fontSize: 11, color: colors.white },
   stepText: { flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: colors.ink },
   bold: { fontFamily: fonts.bodySemi },

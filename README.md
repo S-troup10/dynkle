@@ -40,19 +40,19 @@ To use a local server instead, build with `EXPO_PUBLIC_API_URL=http://<your-LAN-
 
 ## How the terminal works
 
-| Area | What it does |
-| --- | --- |
-| **Pairing** | The terminal requests a 6-character code (10-minute lifetime, refreshed automatically). It polls until the dashboard claims the code, then stores a device token. The production pairing protocol will replace this later. |
-| **Keypad** | Custom amounts, entered as cents (`00` key, delete). If there are already items in the order, the amount is added to it as a line. |
-| **Items** | Categories, groups and items with sizes, synced from the dashboard. Groups show up either as filter chips (Coffee) or as sub-categories (Food → Breads). A size picker opens for items with more than one size. The current order has steppers and shows the GST included (1/11). |
-| **Checkout** | Tip prompt (presets plus a custom amount; skipped when tips are off), then the charge is **armed**. While armed, the QR code, NFC tap and Connect chips are live, and the price is locked for 90 seconds. Then: customer confirming → processing on Solana → **Paid**, **Failed** (retry) or **Expired** (re-arm or edit the order). |
-| **Dashboard charges** | A charge sent from the dashboard pops up over whatever the merchant is doing, except during an active payment. Any amount already keyed in is kept and comes back afterwards. If the terminal was offline when the charge was sent, it is replayed when the terminal reconnects. |
-| **Activity** | Today's total and counts, the list of payments, and a detail view with a receipt QR. |
-| **Settings** | Business details, connection status (network, dashboard, NFC, Bluetooth) and terminal settings. **Admin settings** need the admin code (mock: `123456`) and lock again after 2 minutes. They cover restart, logs, forgetting networks, **managing items**, the dashboard server, unpairing and factory reset. |
-| **System states** | An offline banner (charging is disabled), "This terminal was unpaired" (when the dashboard removes it), and the software-update screen. |
-| **Reliability** | API requests time out after 10 seconds. Reads, and charges sent with an `Idempotency-Key`, are retried on network errors, so a retry can't arm a second charge. The sale in progress is saved on the device: if the app restarts or crashes mid-payment, the charge comes back on screen and is re-checked with the dashboard. The live connection treats 45 seconds without a heartbeat as dead, and reconnects straight away when the network or the app comes back. |
-| **Logs** | The terminal keeps its last 300 log entries on the device. **Admin → View logs** shows them, and **Send logs to support** uploads them to the dashboard (`POST /terminal/logs`). Crashes are logged and show a restart screen. |
-| **Sound** | Short cues when a payment is paid or fails. The **Sound** setting is saved on the terminal. The dashboard's `soundEnabled` is the default. |
+| Area                  | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pairing**           | The terminal requests a 6-character code (10-minute lifetime, refreshed automatically). It polls until the dashboard claims the code, then stores a device token. The production pairing protocol will replace this later.                                                                                                                                                                                                                                             |
+| **Keypad**            | Custom amounts, entered as cents (`00` key, delete). If there are already items in the order, the amount is added to it as a line.                                                                                                                                                                                                                                                                                                                                     |
+| **Items**             | Categories, groups and items with sizes, synced from the dashboard. Groups show up either as filter chips (Coffee) or as sub-categories (Food → Breads). A size picker opens for items with more than one size. The current order has steppers and shows the GST included (1/11).                                                                                                                                                                                      |
+| **Checkout**          | Tip prompt (presets plus a custom amount; skipped when tips are off), then the charge is **armed**. While armed, the QR code, NFC tap and Connect chips are live, and the price is locked for 90 seconds. Then: customer confirming → processing on Solana → **Paid**, **Failed** (retry) or **Expired** (re-arm or edit the order).                                                                                                                                   |
+| **Dashboard charges** | A charge sent from the dashboard pops up over whatever the merchant is doing, except during an active payment. Any amount already keyed in is kept and comes back afterwards. If the terminal was offline when the charge was sent, it is replayed when the terminal reconnects.                                                                                                                                                                                       |
+| **Activity**          | Today's total and counts, the list of payments, and a detail view with a receipt QR.                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Settings**          | Business details, connection status (network, dashboard, NFC, Bluetooth) and terminal settings. **Admin settings** need the admin code (mock: `123456`) and lock again after 2 minutes. They cover restart, logs, forgetting networks, **managing items**, the dashboard server, unpairing and factory reset.                                                                                                                                                          |
+| **System states**     | An offline banner (charging is disabled), "This terminal was unpaired" (when the dashboard removes it), and the software-update screen.                                                                                                                                                                                                                                                                                                                                |
+| **Reliability**       | API requests time out after 10 seconds. Reads, and charges sent with an `Idempotency-Key`, are retried on network errors, so a retry can't arm a second charge. The sale in progress is saved on the device: if the app restarts or crashes mid-payment, the charge comes back on screen and is re-checked with the dashboard. The live connection treats 45 seconds without a heartbeat as dead, and reconnects straight away when the network or the app comes back. |
+| **Logs**              | The terminal keeps its last 300 log entries on the device. **Admin → View logs** shows them, and **Send logs to support** uploads them to the dashboard (`POST /terminal/logs`). Crashes are logged and show a restart screen.                                                                                                                                                                                                                                         |
+| **Sound**             | Short cues when a payment is paid or fails. The **Sound** setting is saved on the terminal. The dashboard's `soundEnabled` is the default.                                                                                                                                                                                                                                                                                                                             |
 
 ### Payment payload (QR and NFC)
 
@@ -65,11 +65,11 @@ On Android, `dynkle-nfc` emulates an NFC Forum Type 4 tag through host card emul
 
 ### Native modules (`apps/terminal/modules`)
 
-| Module | Purpose |
-| --- | --- |
-| `dynkle-nfc` | HCE `HostApduService` serving the armed payment link as an NDEF tag, and reporting NFC state for the Tap chip. |
+| Module         | Purpose                                                                                                                                                                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dynkle-nfc`   | HCE `HostApduService` serving the armed payment link as an NDEF tag, and reporting NFC state for the Tap chip.                                                                                                                            |
 | `dynkle-kiosk` | Lock task mode, device-owner admin receiver, immersive mode and restart/reboot. The `plugins/withKioskLauncher.js` config plugin makes the app the HOME launcher. Setup is in [its README](apps/terminal/modules/dynkle-kiosk/README.md). |
-| `dynkle-wifi` | WiFi scan and join (device owner configures networks directly; otherwise it uses network suggestions or the WiFi panel), plus Bluetooth state. |
+| `dynkle-wifi`  | WiFi scan and join (device owner configures networks directly; otherwise it uses network suggestions or the WiFi panel), plus Bluetooth state.                                                                                            |
 
 In the web preview these fall back to simulated hardware. **Admin → Simulate tap failure** previews the "Tap unavailable" state.
 
@@ -77,33 +77,33 @@ In the web preview these fall back to simulated hardware. **Admin → Simulate t
 
 These endpoints are what the real merchant dashboard needs to provide.
 
-| | |
-| --- | --- |
-| `POST /pairing/codes`, `GET /pairing/codes/:code` | Pairing code issue and poll (no auth) |
-| `POST /pairing/claim {code, tillName}` | Dashboard claims a code |
-| `GET /terminal/me`, `POST /terminal/unpair`, `POST /admin/verify` | Terminal profile, unpair and admin code check (bearer token) |
-| `POST /terminal/logs {entries}` | Terminal log upload, written to the server log tagged with the till |
-| `GET/POST/PATCH/DELETE /catalog…` | Menu: categories (with groups) and items with sizes |
-| `POST /payments`, `GET /payments/:id`, `POST /payments/:id/cancel` | Payment sessions. `POST /payments` takes an `Idempotency-Key` header: a repeat returns the original payment. |
-| `GET /transactions` | Today's activity for the till. "Today" starts at midnight in the merchant's time zone (`merchant.timezone`). |
-| `POST /remote-charges/:id/accept\|dismiss` | Answer a dashboard-sent charge |
-| `GET/POST /solana-pay/:id` | Solana Pay transaction request (stub) |
-| `WS /ws?token=` | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update`, and a `heartbeat` every 20 seconds |
-| `/dev`, `POST /dev/…` | Control panel and scriptable simulators for tests |
+|                                                                    |                                                                                                                                                      |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /pairing/codes`, `GET /pairing/codes/:code`                  | Pairing code issue and poll (no auth)                                                                                                                |
+| `POST /pairing/claim {code, tillName}`                             | Dashboard claims a code                                                                                                                              |
+| `GET /terminal/me`, `POST /terminal/unpair`, `POST /admin/verify`  | Terminal profile, unpair and admin code check (bearer token)                                                                                         |
+| `POST /terminal/logs {entries}`                                    | Terminal log upload, written to the server log tagged with the till                                                                                  |
+| `GET/POST/PATCH/DELETE /catalog…`                                  | Menu: categories (with groups) and items with sizes                                                                                                  |
+| `POST /payments`, `GET /payments/:id`, `POST /payments/:id/cancel` | Payment sessions. `POST /payments` takes an `Idempotency-Key` header: a repeat returns the original payment.                                         |
+| `GET /transactions`                                                | Today's activity for the till. "Today" starts at midnight in the merchant's time zone (`merchant.timezone`).                                         |
+| `POST /remote-charges/:id/accept\|dismiss`                         | Answer a dashboard-sent charge                                                                                                                       |
+| `GET/POST /solana-pay/:id`                                         | Solana Pay transaction request (stub)                                                                                                                |
+| `WS /ws?token=`                                                    | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update`, and a `heartbeat` every 20 seconds |
+| `/dev`, `POST /dev/…`                                              | Control panel and scriptable simulators for tests                                                                                                    |
 
 Every request body is validated against the zod schemas in `packages/shared/src/schemas.ts`. A bad body gets a `400` that names the field. The terminal's request types are inferred from the same schemas. Each request also sends the terminal's app version in `x-dynkle-app-version`, and the profile reports it back.
 
 ### Server settings
 
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `PORT`, `HOST` | `4000`, `0.0.0.0` | Where to listen |
-| `TOKEN_SECRET` | unset | Signs device tokens, so terminals stay paired across restarts even with nothing saved. Without it, a restart unpairs every terminal. |
-| `DATA_FILE` | unset | JSON file the server saves everything to (menu, payments, tills) and reloads on start |
-| `DEV_PASSWORD` | unset | Password for `/dev` |
-| `PUBLIC_URL` | request host | Base URL for Solana Pay links |
-| `SEED_ACTIVITY` | `1` | Sample history for newly paired tills (`0` turns it off) |
-| `LOG`, `LOG_LEVEL` | on, `info` | JSON request logs (`LOG=0` turns them off). Device tokens are redacted from logged URLs. |
+| Variable           | Default           | What it does                                                                                                                         |
+| ------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`, `HOST`     | `4000`, `0.0.0.0` | Where to listen                                                                                                                      |
+| `TOKEN_SECRET`     | unset             | Signs device tokens, so terminals stay paired across restarts even with nothing saved. Without it, a restart unpairs every terminal. |
+| `DATA_FILE`        | unset             | JSON file the server saves everything to (menu, payments, tills) and reloads on start                                                |
+| `DEV_PASSWORD`     | unset             | Password for `/dev`                                                                                                                  |
+| `PUBLIC_URL`       | request host      | Base URL for Solana Pay links                                                                                                        |
+| `SEED_ACTIVITY`    | `1`               | Sample history for newly paired tills (`0` turns it off)                                                                             |
+| `LOG`, `LOG_LEVEL` | on, `info`        | JSON request logs (`LOG=0` turns them off). Device tokens are redacted from logged URLs.                                             |
 
 ## Deploy the mock dashboard (Render)
 
@@ -119,6 +119,7 @@ This deploys the mock dashboard so the terminal can reach it over the internet, 
 The terminal API, `/ws` and `/solana-pay` stay open. Only `/dev` needs the password. Payment links use `https://` automatically behind Render's proxy.
 
 **On the free plan:**
+
 - The service sleeps after about 15 minutes with no traffic, and the first request after that takes about 30 seconds.
 - Data lives in memory, so every restart or redeploy wipes menu edits and payment history. Terminals **stay paired**: `render.yaml` generates a `TOKEN_SECRET`, and the server recognises the signed tokens it issued before the restart.
 

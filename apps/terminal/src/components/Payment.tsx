@@ -9,7 +9,13 @@ import { Spinner } from './Spinner';
 
 export function QRCard({ value, size = 200 }: { value: string; size?: number }) {
   return (
-    <View style={[s.qrCard, { width: size + 40, height: size + 40 }]} testID="payment-qr" accessible accessibilityRole="image" accessibilityLabel="Payment QR code. Scan with the DYNK app or any Solana wallet.">
+    <View
+      style={[s.qrCard, { width: size + 40, height: size + 40 }]}
+      testID="payment-qr"
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel="Payment QR code. Scan with the DYNK app or any Solana wallet."
+    >
       <QRCode value={value} size={size} color={colors.ink} backgroundColor={colors.white} ecl="H" />
       <View style={s.qrLogo}>
         <Icon name="tap" size={20} color={colors.white} strokeWidth={2.4} />
@@ -57,7 +63,9 @@ export function PriceLock({ secondsLeft, totalSeconds }: { secondsLeft: number; 
     <View style={{ gap: 8 }}>
       <View style={s.lockRow} accessible accessibilityLabel={`Price locked for ${Math.ceil(secondsLeft)} more seconds`}>
         <Text style={s.lockLabel}>Price locked</Text>
-        <Text style={s.lockTime} testID="price-lock">{formatCountdown(secondsLeft)}</Text>
+        <Text style={s.lockTime} testID="price-lock">
+          {formatCountdown(secondsLeft)}
+        </Text>
       </View>
       <View style={s.track}>
         <View style={[s.bar, { width: `${pct * 100}%` }]} />
@@ -110,7 +118,12 @@ export function Banner({
 }) {
   const dark = tone === 'dark';
   return (
-    <View style={[s.banner, dark ? { backgroundColor: colors.ink } : { backgroundColor: colors.amberTint, borderColor: colors.amberLine, borderWidth: 1 }]}>
+    <View
+      style={[
+        s.banner,
+        dark ? { backgroundColor: colors.ink } : { backgroundColor: colors.amberTint, borderColor: colors.amberLine, borderWidth: 1 },
+      ]}
+    >
       <Icon name={icon} size={24} color={dark ? colors.orange : colors.amberInk} />
       <View style={{ flex: 1 }}>
         <Text style={[s.bannerTitle, { color: dark ? colors.white : colors.amberInk }]}>{title}</Text>

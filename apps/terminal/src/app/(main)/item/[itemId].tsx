@@ -16,9 +16,16 @@ export default function SizePicker() {
   const [qty, setQty] = useState(1);
   const close = () => router.back();
 
-  if (!catalog || !item) return <Sheet onDismiss={close}><T>Item not found.</T></Sheet>;
+  if (!catalog || !item)
+    return (
+      <Sheet onDismiss={close}>
+        <T>Item not found.</T>
+      </Sheet>
+    );
   const variant = item.variants.find((v) => v.id === variantId) ?? item.variants[0];
-  const category = categoryPath(catalog, item.categoryId).map((c) => c.name).join(' · ');
+  const category = categoryPath(catalog, item.categoryId)
+    .map((c) => c.name)
+    .join(' · ');
 
   const add = () => {
     useCart.getState().addItem(item, variant, qty);
@@ -74,7 +81,15 @@ const s = StyleSheet.create({
     backgroundColor: colors.white,
   },
   optionOn: { borderColor: colors.orange, backgroundColor: colors.orangeTint },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(33,35,32,0.25)', alignItems: 'center', justifyContent: 'center' },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: 'rgba(33,35,32,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   radioOn: { borderColor: colors.orange },
   radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.orange },
   optName: { flex: 1, fontFamily: fonts.bodyMedium, fontSize: 17, color: colors.ink },

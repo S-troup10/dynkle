@@ -31,9 +31,7 @@ export default function Activity() {
           <Text style={s.summaryAmount} testID="today-total">
             {formatMoney(d?.totalPaidCents ?? 0)}
           </Text>
-          <Text style={s.summarySub}>
-            {d ? `${d.paidCount} paid · ${d.failedCount} failed · ${d.expiredCount} expired` : ' '}
-          </Text>
+          <Text style={s.summarySub}>{d ? `${d.paidCount} paid · ${d.failedCount} failed · ${d.expiredCount} expired` : ' '}</Text>
         </View>
 
         {q.isLoading ? (
@@ -53,9 +51,24 @@ export default function Activity() {
 }
 
 export function StatusPill({ status }: { status: PaymentSession['status'] }) {
-  if (status === 'paid') return <Pill tone="green" style={s.pill}>Paid</Pill>;
-  if (status === 'failed') return <Pill tone="red" style={s.pill}>Failed</Pill>;
-  if (status === 'expired') return <Pill tone="amber" style={s.pill}>Expired</Pill>;
+  if (status === 'paid')
+    return (
+      <Pill tone="green" style={s.pill}>
+        Paid
+      </Pill>
+    );
+  if (status === 'failed')
+    return (
+      <Pill tone="red" style={s.pill}>
+        Failed
+      </Pill>
+    );
+  if (status === 'expired')
+    return (
+      <Pill tone="amber" style={s.pill}>
+        Expired
+      </Pill>
+    );
   return <Pill style={s.pill}>{status}</Pill>;
 }
 

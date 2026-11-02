@@ -4,7 +4,12 @@ import Svg, { Circle } from 'react-native-svg';
 import { colors } from '@/theme';
 
 /** Orange arc spinner used for "in progress" steps and the processing ring. */
-export function Spinner({ size = 24, stroke = 2.5, color = colors.orange, track = colors.orangeGlow }: {
+export function Spinner({
+  size = 24,
+  stroke = 2.5,
+  color = colors.orange,
+  track = colors.orangeGlow,
+}: {
   size?: number;
   stroke?: number;
   color?: string;
@@ -12,9 +17,7 @@ export function Spinner({ size = 24, stroke = 2.5, color = colors.orange, track 
 }) {
   const [spin] = useState(() => new Animated.Value(0));
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.timing(spin, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }),
-    );
+    const loop = Animated.loop(Animated.timing(spin, { toValue: 1, duration: 1000, easing: Easing.linear, useNativeDriver: true }));
     loop.start();
     return () => loop.stop();
   }, [spin]);

@@ -207,19 +207,16 @@ export async function buildServer(opts: ServerOptions = {}) {
     const p = store.getPayment(req.params.id);
     return { label: merchant.name, icon: `${baseUrl(req)}/icon.svg`, amountCents: p.totalCents, feeCents: p.customerFeeCents };
   });
-  app.post(
-    '/solana-pay/:id',
-    async (req: FastifyRequest<{ Params: { id: string }; Querystring: { wallet?: string } }>) => {
-      const { account } = parse(solanaPayRequestSchema, req.body);
-      const wallet = paymentMethodSchema.shape.wallet.catch('Phantom').parse(req.query.wallet) as PaymentMethod['wallet'];
-      const short = account.length > 8 ? `${account.slice(0, 4)}…${account.slice(-4)}` : undefined;
-      store.connectWallet(req.params.id, { wallet, channel: 'qr' }, short);
-      return {
-        transaction: Buffer.from(`mock-tx:${req.params.id}:${account}`).toString('base64'),
-        message: `Thanks for paying at ${merchant.name}`,
-      };
-    },
-  );
+  app.post('/solana-pay/:id', async (req: FastifyRequest<{ Params: { id: string }; Querystring: { wallet?: string } }>) => {
+    const { account } = parse(solanaPayRequestSchema, req.body);
+    const wallet = paymentMethodSchema.shape.wallet.catch('Phantom').parse(req.query.wallet) as PaymentMethod['wallet'];
+    const short = account.length > 8 ? `${account.slice(0, 4)}…${account.slice(-4)}` : undefined;
+    store.connectWallet(req.params.id, { wallet, channel: 'qr' }, short);
+    return {
+      transaction: Buffer.from(`mock-tx:${req.params.id}:${account}`).toString('base64'),
+      message: `Thanks for paying at ${merchant.name}`,
+    };
+  });
   app.get('/icon.svg', async (_req, reply) =>
     reply
       .type('image/svg+xml')
