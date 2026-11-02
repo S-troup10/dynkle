@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, lint, format, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - name: Build the mock server bundle (what the Docker image runs)
+        run: npm run build:server
+
+  e2e:
+    name: End-to-end (web build against the mock dashboard)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Start the mock dashboard and the terminal web build
+        run: |
+          (LOG=0 npm run start:ts -w @dynkle/mock-server > server.log 2>&1 &)
+          (cd apps/terminal && CI=1 npx expo start --web --port 8081 > ../../web.log 2>&1 &)
+          for i in $(seq 1 120); do
+            curl -sf http://localhost:4000/health > /dev/null && curl -sf http://localhost:8081 > /dev/null && exit 0
+            sleep 2
+          done
+          echo "Servers did not start"; tail -50 server.log web.log; exit 1
+      - name: Run the walkthrough
+        run: node e2e/web-flow.mjs
+        env:
+          SHOTS: e2e-shots
+      - name: Upload screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e
+          path: |
+            e2e-shots/
+            server.log
+            web.log
+          if-no-files-found: ignore

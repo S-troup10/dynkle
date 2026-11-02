@@ -12,5 +12,12 @@ services:
       # Password for /dev (dashboard + wallet simulator). Find it under the service's Environment tab.
       - key: DEV_PASSWORD
         generateValue: true
+      # Signs device tokens so terminals stay paired when the free instance sleeps and restarts.
+      - key: TOKEN_SECRET
+        generateValue: true
       - key: SEED_ACTIVITY
         value: "1"
+      # Optional: save everything (menu edits, payments) to a file. Needs a Render disk (paid plans),
+      # e.g. mount one at /data and set DATA_FILE=/data/store.json.
+      # - key: DATA_FILE
+      #   value: /data/store.json

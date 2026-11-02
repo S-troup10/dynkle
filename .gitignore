@@ -10,3 +10,5 @@ coverage/
 apps/terminal/modules/*/android/build/
 .gradle/
 .kotlin/
+e2e-shots/
+data/

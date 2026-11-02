@@ -1,0 +1,10 @@
+node_modules
+package-lock.json
+design/
+apps/terminal/android/
+apps/terminal/ios/
+apps/terminal/.expo/
+dist/
+coverage/
+*.wav
+*.png

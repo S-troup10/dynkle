@@ -11,7 +11,20 @@
     "web": "npm run web -w @dynkle/terminal",
     "test": "npm test -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal",
     "typecheck": "npm run typecheck -w @dynkle/shared -w @dynkle/mock-server -w @dynkle/terminal",
-    "lint": "npm run lint -w @dynkle/terminal",
-    "e2e": "node e2e/web-flow.mjs"
+    "lint": "eslint . && npm run lint -w @dynkle/terminal",
+    "e2e": "node e2e/web-flow.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
+    "build:server": "npm run build -w @dynkle/mock-server"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1"
   }
 }

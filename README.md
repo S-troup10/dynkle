@@ -50,6 +50,9 @@ To use a local server instead, build with `EXPO_PUBLIC_API_URL=http://<your-LAN-
 | **Activity** | Today's total and counts, the list of payments, and a detail view with a receipt QR. |
 | **Settings** | Business details, connection status (network, dashboard, NFC, Bluetooth) and terminal settings. **Admin settings** need the admin code (mock: `123456`) and lock again after 2 minutes. They cover restart, logs, forgetting networks, **managing items**, the dashboard server, unpairing and factory reset. |
 | **System states** | An offline banner (charging is disabled), "This terminal was unpaired" (when the dashboard removes it), and the software-update screen. |
+| **Reliability** | API requests time out after 10 seconds. Reads, and charges sent with an `Idempotency-Key`, are retried on network errors, so a retry can't arm a second charge. The sale in progress is saved on the device: if the app restarts or crashes mid-payment, the charge comes back on screen and is re-checked with the dashboard. The live connection treats 45 seconds without a heartbeat as dead, and reconnects straight away when the network or the app comes back. |
+| **Logs** | The terminal keeps its last 300 log entries on the device. **Admin → View logs** shows them, and **Send logs to support** uploads them to the dashboard (`POST /terminal/logs`). Crashes are logged and show a restart screen. |
+| **Sound** | Short cues when a payment is paid or fails. The **Sound** setting is saved on the terminal. The dashboard's `soundEnabled` is the default. |
 
 ### Payment payload (QR and NFC)
 
@@ -79,13 +82,28 @@ These endpoints are what the real merchant dashboard needs to provide.
 | `POST /pairing/codes`, `GET /pairing/codes/:code` | Pairing code issue and poll (no auth) |
 | `POST /pairing/claim {code, tillName}` | Dashboard claims a code |
 | `GET /terminal/me`, `POST /terminal/unpair`, `POST /admin/verify` | Terminal profile, unpair and admin code check (bearer token) |
+| `POST /terminal/logs {entries}` | Terminal log upload, written to the server log tagged with the till |
 | `GET/POST/PATCH/DELETE /catalog…` | Menu: categories (with groups) and items with sizes |
-| `POST /payments`, `GET /payments/:id`, `POST /payments/:id/cancel` | Payment sessions |
-| `GET /transactions` | Today's activity for the till |
+| `POST /payments`, `GET /payments/:id`, `POST /payments/:id/cancel` | Payment sessions. `POST /payments` takes an `Idempotency-Key` header: a repeat returns the original payment. |
+| `GET /transactions` | Today's activity for the till. "Today" starts at midnight in the merchant's time zone (`merchant.timezone`). |
 | `POST /remote-charges/:id/accept\|dismiss` | Answer a dashboard-sent charge |
 | `GET/POST /solana-pay/:id` | Solana Pay transaction request (stub) |
-| `WS /ws?token=` | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update` |
+| `WS /ws?token=` | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update`, and a `heartbeat` every 20 seconds |
 | `/dev`, `POST /dev/…` | Control panel and scriptable simulators for tests |
+
+Every request body is validated against the zod schemas in `packages/shared/src/schemas.ts`. A bad body gets a `400` that names the field. The terminal's request types are inferred from the same schemas. Each request also sends the terminal's app version in `x-dynkle-app-version`, and the profile reports it back.
+
+### Server settings
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `PORT`, `HOST` | `4000`, `0.0.0.0` | Where to listen |
+| `TOKEN_SECRET` | unset | Signs device tokens, so terminals stay paired across restarts even with nothing saved. Without it, a restart unpairs every terminal. |
+| `DATA_FILE` | unset | JSON file the server saves everything to (menu, payments, tills) and reloads on start |
+| `DEV_PASSWORD` | unset | Password for `/dev` |
+| `PUBLIC_URL` | request host | Base URL for Solana Pay links |
+| `SEED_ACTIVITY` | `1` | Sample history for newly paired tills (`0` turns it off) |
+| `LOG`, `LOG_LEVEL` | on, `info` | JSON request logs (`LOG=0` turns them off). Device tokens are redacted from logged URLs. |
 
 ## Deploy the mock dashboard (Render)
 
@@ -102,9 +120,9 @@ The terminal API, `/ws` and `/solana-pay` stay open. Only `/dev` needs the passw
 
 **On the free plan:**
 - The service sleeps after about 15 minutes with no traffic, and the first request after that takes about 30 seconds.
-- Data lives in memory, so every restart or redeploy wipes it. Terminals then show "This terminal was unpaired", and you pair them again.
+- Data lives in memory, so every restart or redeploy wipes menu edits and payment history. Terminals **stay paired**: `render.yaml` generates a `TOKEN_SECRET`, and the server recognises the signed tokens it issued before the restart.
 
-The $7/month Starter plan stays awake.
+To keep the data as well, add a Render disk (paid plans), mount it at `/data`, and set `DATA_FILE=/data/store.json`. The $7/month Starter plan also stays awake.
 
 Vercel won't work: it only runs short-lived serverless functions, and the mock needs a long-running process for WebSockets, in-memory state and the price-lock timers.
 
@@ -114,11 +132,16 @@ To run the e2e walk-through against the hosted dashboard:
 ## Checks
 
 ```sh
-npm test              # shared + mock server (Vitest) + terminal logic (Jest)
+npm run check         # typecheck + lint + format check + all tests
+npm test              # shared + mock server (Vitest) + terminal (Jest + React Native Testing Library)
 npm run typecheck
-npm run lint -w @dynkle/terminal
+npm run lint          # ESLint: server/shared/e2e (eslint.config.mjs) and the terminal (Expo config)
+npm run format        # Prettier (format:check to verify)
+npm run build:server  # bundle the mock server to apps/mock-server/dist (what the Docker image runs)
 node e2e/web-flow.mjs # with server + web running; needs Playwright (SHOTS=dir saves screenshots)
 ```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the checks and the e2e walk-through on every pull request.
 
 ## Not in V1
 
