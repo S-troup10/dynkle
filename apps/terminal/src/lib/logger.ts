@@ -23,6 +23,8 @@ function save() {
     saveTimer = null;
     storage.set(KEY, entries);
   }, SAVE_DELAY_MS);
+  // Under Node (tests) a pending save mustn't keep the process alive. RN timers have no unref.
+  (saveTimer as { unref?: () => void }).unref?.();
 }
 
 /** Keeps context small and serialisable: errors become their message, long strings are cut. */
