@@ -2,6 +2,9 @@ import type { Catalog, Category, Item, Merchant, TerminalSettings } from '@dynkl
 
 export const ADMIN_CODE = '123456';
 
+/** The mock terminal's OS build, reported in the terminal profile. */
+export const FIRMWARE_VERSION = 'A14-2026.10';
+
 export const merchant: Merchant = {
   id: 'mer_dynkle_cafe',
   name: 'Dynkle Café',
@@ -11,6 +14,7 @@ export const merchant: Merchant = {
   phone: '(03) 9510 0000',
   email: 'hello@dynklecafe.com.au',
   walletAddress: '9wQd…Ld2c',
+  timezone: 'Australia/Melbourne',
 };
 
 export const defaultSettings: TerminalSettings = {

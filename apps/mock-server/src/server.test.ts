@@ -143,6 +143,15 @@ describe('payments', () => {
     expect(p.source).toBe('dashboard');
     expect(p.reference).toBe('Table 4');
     expect(p.tipCents).toBe(0);
+    // A retried accept gets the same payment back instead of a second charge.
+    const again = await req<PaymentSession>('POST', `/remote-charges/${rc.json.id}/accept`);
+    expect(again.status).toBe(200);
+    expect(again.json.id).toBe(p.id);
+  });
+
+  it("won't accept a dismissed remote charge", async () => {
+    const rc = await req<{ id: string }>('POST', '/dev/remote-charge', { amountCents: 900 });
+    await req('POST', `/remote-charges/${rc.json.id}/dismiss`);
     expect((await req('POST', `/remote-charges/${rc.json.id}/accept`)).status).toBe(409);
   });
 });

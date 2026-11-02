@@ -1,7 +1,13 @@
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import {
   FINAL_STATUSES,
   gstIncluded,
+  startOfDayIn,
+  todayAt,
+  type AddItemRequest,
   type Catalog,
   type Category,
   type CreatePaymentRequest,
@@ -16,10 +22,13 @@ import {
   type TerminalSettings,
   type Till,
   type TransactionsResponse,
+  type RemoteChargeRequest,
+  type UpdateItemRequest,
   type Variant,
+  type VariantInput,
 } from '@dynkle/shared';
 import { fakeBase58, id, pairingCode, token } from './ids';
-import { ADMIN_CODE, defaultSettings, merchant, seedCatalog } from './seed';
+import { ADMIN_CODE, FIRMWARE_VERSION, defaultSettings, merchant, seedCatalog } from './seed';
 
 export interface StoreOptions {
   pairingTtlMs?: number;
@@ -27,12 +36,44 @@ export interface StoreOptions {
   confirmDelayMs?: number;
   /** Add sample history to each newly paired till so the Activity tab isn't empty. */
   seedActivity?: boolean;
+  /**
+   * Secret used to sign device tokens. With it, a terminal's token stays valid
+   * across server restarts even when nothing is saved to disk (Render's free plan
+   * restarts the server and wipes memory whenever it sleeps).
+   */
+  tokenSecret?: string;
+  /** JSON file the store is saved to and loaded from. Without it everything lives in memory. */
+  dataFile?: string;
 }
 
 interface Device {
   token: string;
   till: Till;
+  /** Version the terminal reported in its last request. */
+  appVersion?: string;
 }
+
+type StoredRemoteCharge = RemoteCharge & { tillId: string; state: 'pending' | 'accepted' | 'dismissed'; paymentId?: string };
+
+interface Snapshot {
+  version: 1;
+  savedAt: string;
+  catalog: Catalog;
+  settings: TerminalSettings;
+  tillCount: number;
+  devices: Device[];
+  revokedTills: string[];
+  payments: PaymentSession[];
+  remoteCharges: StoredRemoteCharge[];
+  idempotency: Array<[string, string]>;
+}
+
+const LIVE_STATUSES: PaymentSession['status'][] = ['armed', 'wallet_connected', 'approved', 'confirming'];
+/** Completed payments older than this are dropped. */
+const PAYMENT_RETENTION_MS = 30 * 24 * 3_600_000;
+/** Unanswered dashboard charges older than this are dropped. */
+const REMOTE_CHARGE_RETENTION_MS = 24 * 3_600_000;
+const SAVE_DEBOUNCE_MS = 200;
 
 export class HttpError extends Error {
   constructor(
@@ -53,11 +94,18 @@ export class Store {
   pairingCodes = new Map<string, PairingCode>();
   devices = new Map<string, Device>();
   payments = new Map<string, PaymentSession>();
-  remoteCharges = new Map<string, RemoteCharge & { tillId: string; state: 'pending' | 'accepted' | 'dismissed' }>();
+  remoteCharges = new Map<string, StoredRemoteCharge>();
+  /** Tills the dashboard unpaired. Their signed tokens must not come back to life. */
+  revokedTills = new Set<string>();
+  /** `${tillId}:${Idempotency-Key}` -> payment id. */
+  idempotency = new Map<string, string>();
   private timers = new Set<NodeJS.Timeout>();
   private tillCount = 0;
+  private saveTimer: NodeJS.Timeout | null = null;
 
-  constructor(private opts: StoreOptions = {}) {}
+  constructor(private opts: StoreOptions = {}) {
+    this.load();
+  }
 
   get pairingTtlMs() {
     return this.opts.pairingTtlMs ?? 10 * 60_000;
@@ -71,6 +119,95 @@ export class Store {
     for (const t of this.timers) clearTimeout(t);
     this.timers.clear();
     this.events.removeAllListeners();
+    if (this.saveTimer) this.flush();
+  }
+
+  // ---------- Persistence ----------
+
+  private load() {
+    const file = this.opts.dataFile;
+    if (!file || !existsSync(file)) return;
+    const snap = JSON.parse(readFileSync(file, 'utf8')) as Snapshot;
+    if (snap.version !== 1) throw new Error(`Unsupported data file version ${snap.version}`);
+    this.catalog = snap.catalog;
+    this.settings = { ...defaultSettings, ...snap.settings };
+    this.tillCount = snap.tillCount;
+    this.devices = new Map(snap.devices.map((d) => [d.token, d]));
+    this.revokedTills = new Set(snap.revokedTills);
+    this.payments = new Map(snap.payments.map((p) => [p.id, p]));
+    this.remoteCharges = new Map(snap.remoteCharges.map((c) => [c.id, c]));
+    this.idempotency = new Map(snap.idempotency);
+    this.resumeLivePayments();
+  }
+
+  /** Timers don't survive a restart: re-arm expiry for live charges and finish ones mid-confirmation. */
+  private resumeLivePayments() {
+    for (const p of this.payments.values()) {
+      if (p.status === 'armed' || p.status === 'wallet_connected') {
+        const left = Date.parse(p.expiresAt) - Date.now();
+        if (left <= 0) this.setStatus(p, 'expired');
+        else this.scheduleExpiry(p, left);
+      } else if (p.status === 'approved' || p.status === 'confirming') {
+        this.setStatus(p, 'confirming');
+        this.later(this.confirmDelayMs, () => {
+          if (p.status === 'confirming') this.setStatus(p, 'paid', { txSignature: fakeBase58(88) });
+        });
+      }
+    }
+  }
+
+  snapshot(): Snapshot {
+    return {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      catalog: this.catalog,
+      settings: this.settings,
+      tillCount: this.tillCount,
+      devices: [...this.devices.values()],
+      revokedTills: [...this.revokedTills],
+      payments: [...this.payments.values()],
+      remoteCharges: [...this.remoteCharges.values()],
+      idempotency: [...this.idempotency],
+    };
+  }
+
+  /** Something changed: save soon (writes are batched). */
+  private changed() {
+    if (!this.opts.dataFile || this.saveTimer) return;
+    this.saveTimer = setTimeout(() => this.flush(), SAVE_DEBOUNCE_MS);
+  }
+
+  /** Write the data file now. Written to a temp file first so a crash can't leave it half-written. */
+  flush() {
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    this.saveTimer = null;
+    const file = this.opts.dataFile;
+    if (!file) return;
+    mkdirSync(dirname(file), { recursive: true });
+    const tmp = `${file}.tmp`;
+    writeFileSync(tmp, JSON.stringify(this.snapshot()));
+    renameSync(tmp, file);
+  }
+
+  /** Drop old pairing codes, payments and dashboard charges so memory (and the data file) stay bounded. */
+  prune(now = Date.now()) {
+    for (const [code, pc] of this.pairingCodes) {
+      // Claimed codes stay around until they'd have expired, so the terminal can still collect its token.
+      if (Date.parse(pc.expiresAt) + 60_000 < now) this.pairingCodes.delete(code);
+    }
+    const dropped = new Set<string>();
+    for (const [pid, p] of this.payments) {
+      if (FINAL_STATUSES.includes(p.status) && Date.parse(p.completedAt ?? p.createdAt) + PAYMENT_RETENTION_MS < now) {
+        this.payments.delete(pid);
+        dropped.add(pid);
+      }
+    }
+    for (const [key, pid] of this.idempotency) {
+      if (dropped.has(pid) || !this.payments.has(pid)) this.idempotency.delete(key);
+    }
+    for (const [cid, c] of this.remoteCharges) {
+      if (Date.parse(c.sentAt) + REMOTE_CHARGE_RETENTION_MS < now) this.remoteCharges.delete(cid);
+    }
   }
 
   private later(ms: number, fn: () => void) {
@@ -84,11 +221,13 @@ export class Store {
   /** Events go to one till (tillId) or every paired till (null). */
   private emit(tillId: string | null, event: ServerEvent) {
     this.events.emit('event', { tillId, event });
+    this.changed();
   }
 
   // ---------- Pairing ----------
 
   createPairingCode(): PairingCode {
+    this.prune();
     let code = pairingCode();
     while (this.pairingCodes.has(code)) code = pairingCode();
     const pc: PairingCode = {
@@ -112,17 +251,57 @@ export class Store {
     if (pc.status !== 'waiting') throw new HttpError(409, `Pairing code is ${pc.status}`);
     this.tillCount += 1;
     const till: Till = { id: id('till'), name: tillName?.trim() || `Till ${this.tillCount}` };
-    const t = token();
+    const t = this.issueToken(till);
     this.devices.set(t, { token: t, till });
     pc.status = 'claimed';
     pc.token = t;
     if (this.opts.seedActivity ?? true) this.seedHistory(till.id);
+    this.changed();
     return { till, token: t };
   }
 
-  deviceFor(t: string | undefined): Device {
-    const d = t ? this.devices.get(t) : undefined;
+  /** `<payload>.<hmac>` when a token secret is set, so the token can be checked without stored state. */
+  private issueToken(till: Till): string {
+    if (!this.opts.tokenSecret) return token();
+    const payload = Buffer.from(JSON.stringify({ t: till.id, n: till.name, r: randomBytes(9).toString('base64url') })).toString(
+      'base64url',
+    );
+    return `${payload}.${this.sign(payload)}`;
+  }
+
+  private sign(payload: string) {
+    return createHmac('sha256', this.opts.tokenSecret!).update(payload).digest('base64url');
+  }
+
+  /** A signed token we issued before a restart: bring its till back. */
+  private restoreFromToken(t: string): Device | undefined {
+    if (!this.opts.tokenSecret) return undefined;
+    const [payload, sig] = t.split('.');
+    if (!payload || !sig) return undefined;
+    const expected = Buffer.from(this.sign(payload));
+    const given = Buffer.from(sig);
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) return undefined;
+    let claims: { t?: unknown; n?: unknown };
+    try {
+      claims = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    } catch {
+      return undefined;
+    }
+    if (typeof claims.t !== 'string' || typeof claims.n !== 'string' || this.revokedTills.has(claims.t)) return undefined;
+    const existing = [...this.devices.values()].find((d) => d.till.id === claims.t);
+    const device: Device = { token: t, till: existing?.till ?? { id: claims.t, name: claims.n } };
+    this.devices.set(t, device);
+    this.changed();
+    return device;
+  }
+
+  deviceFor(t: string | undefined, appVersion?: string): Device {
+    const d = t ? (this.devices.get(t) ?? this.restoreFromToken(t)) : undefined;
     if (!d) throw new HttpError(401, 'Terminal is not paired');
+    if (appVersion && d.appVersion !== appVersion) {
+      d.appVersion = appVersion;
+      this.changed();
+    }
     return d;
   }
 
@@ -137,23 +316,26 @@ export class Store {
         this.devices.delete(t);
       }
     }
+    this.revokedTills.add(tillId);
+    this.changed();
   }
 
-  profile(till: Till): TerminalProfile {
+  profile(device: Device): TerminalProfile {
+    const { till } = device;
     return {
       merchant,
       till,
       settings: this.settings,
       serial: 'DK1-' + till.id.slice(-6).toUpperCase(),
-      appVersion: '1.0.0',
-      firmwareVersion: 'A14-2026.10',
+      appVersion: device.appVersion ?? 'unknown',
+      firmwareVersion: FIRMWARE_VERSION,
     };
   }
 
   updateSettings(patch: Partial<TerminalSettings>) {
     this.settings = { ...this.settings, ...patch };
     for (const d of this.devices.values()) {
-      this.emit(d.till.id, { type: 'settings.updated', profile: this.profile(d.till) });
+      this.emit(d.till.id, { type: 'settings.updated', profile: this.profile(d) });
     }
   }
 
@@ -161,7 +343,7 @@ export class Store {
     for (const d of this.devices.values()) {
       if (d.till.id === tillId) {
         d.till.name = name;
-        this.emit(tillId, { type: 'settings.updated', profile: this.profile(d.till) });
+        this.emit(tillId, { type: 'settings.updated', profile: this.profile(d) });
       }
     }
   }
@@ -222,7 +404,7 @@ export class Store {
     this.catalogChanged();
   }
 
-  private normaliseVariants(variants: Array<Partial<Variant>> | undefined, itemId: string): Variant[] {
+  private normaliseVariants(variants: VariantInput[] | undefined, itemId: string): Variant[] {
     if (!variants?.length) throw new HttpError(400, 'At least one size/price is required');
     return variants.map((v, i) => {
       const price = Number(v.priceCents);
@@ -231,7 +413,7 @@ export class Store {
     });
   }
 
-  addItem(input: { categoryId: string; name: string; group?: string; variants: Array<Partial<Variant>> }): Item {
+  addItem(input: AddItemRequest): Item {
     if (!this.catalog.categories.some((c) => c.id === input.categoryId)) throw new HttpError(400, 'Unknown category');
     if (!input.name?.trim()) throw new HttpError(400, 'Name is required');
     const itemId = id('itm');
@@ -248,7 +430,7 @@ export class Store {
     return item;
   }
 
-  updateItem(itemId: string, patch: Partial<Omit<Item, 'id' | 'variants'>> & { variants?: Array<Partial<Variant>> }): Item {
+  updateItem(itemId: string, patch: UpdateItemRequest): Item {
     const item = this.catalog.items.find((i) => i.id === itemId);
     if (!item) throw new HttpError(404, 'Unknown item');
     if (patch.categoryId !== undefined) {
@@ -277,7 +459,14 @@ export class Store {
     req: CreatePaymentRequest,
     baseUrl: string,
     source: PaymentSession['source'] = 'terminal',
+    idempotencyKey?: string,
   ): PaymentSession {
+    // A retry of a request we already handled (the terminal timed out waiting for the reply): same payment back.
+    const idemKey = idempotencyKey ? `${tillId}:${idempotencyKey}` : undefined;
+    const earlier = idemKey ? this.payments.get(this.idempotency.get(idemKey) ?? '') : undefined;
+    if (earlier) return earlier;
+
+    this.prune();
     const subtotal = Math.round(Number(req.subtotalCents));
     const tip = Math.round(Number(req.tipCents ?? 0));
     if (!Number.isFinite(subtotal) || subtotal <= 0) throw new HttpError(400, 'Amount must be more than zero');
@@ -312,11 +501,16 @@ export class Store {
       solanaPayUrl,
     };
     this.payments.set(p.id, p);
+    if (idemKey) this.idempotency.set(idemKey, p.id);
     this.emit(tillId, { type: 'payment.status', payment: p });
-    this.later(this.settings.priceLockSeconds * 1000, () => {
+    this.scheduleExpiry(p, this.settings.priceLockSeconds * 1000);
+    return p;
+  }
+
+  private scheduleExpiry(p: PaymentSession, ms: number) {
+    this.later(ms, () => {
       if (p.status === 'armed' || p.status === 'wallet_connected') this.setStatus(p, 'expired');
     });
-    return p;
   }
 
   getPayment(paymentId: string): PaymentSession {
@@ -328,7 +522,7 @@ export class Store {
   /** Resolves "latest" to the most recent live payment, for the dev panel and scripted tests. */
   resolvePayment(paymentId: string): PaymentSession {
     if (paymentId !== 'latest') return this.getPayment(paymentId);
-    const live = [...this.payments.values()].filter((p) => !FINAL_STATUSES.includes(p.status));
+    const live = [...this.payments.values()].filter((p) => LIVE_STATUSES.includes(p.status));
     const p = live.at(-1);
     if (!p) throw new HttpError(404, 'No live payment');
     return p;
@@ -388,11 +582,11 @@ export class Store {
   }
 
   transactions(tillId: string): TransactionsResponse {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // "Today" is the merchant's day, not the server's (which runs in UTC).
+    const startOfDay = startOfDayIn(merchant.timezone);
     const list = [...this.payments.values()]
       .filter((p) => p.tillId === tillId && ['paid', 'failed', 'expired'].includes(p.status))
-      .filter((p) => Date.parse(p.createdAt) >= startOfDay.getTime())
+      .filter((p) => Date.parse(p.createdAt) >= startOfDay)
       .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
     const paid = list.filter((p) => p.status === 'paid');
     return {
@@ -406,24 +600,23 @@ export class Store {
 
   // ---------- Remote charges (sent from the dashboard) ----------
 
-  sendRemoteCharge(input: { tillId?: string; amountCents: number; reference?: string; sentBy?: string }) {
-    const tillId = input.tillId ?? this.tills()[0]?.id;
+  sendRemoteCharge(input: RemoteChargeRequest) {
+    const tillId = input.tillId || this.tills()[0]?.id;
     if (!tillId) throw new HttpError(400, 'No paired terminal');
     const amount = Math.round(Number(input.amountCents));
     if (!(amount > 0)) throw new HttpError(400, 'Amount must be more than zero');
-    const charge = {
+    const charge: StoredRemoteCharge = {
       id: id('rc'),
       tillId,
       amountCents: amount,
       reference: input.reference?.trim() || 'Dashboard charge',
       sentBy: input.sentBy?.trim() || 'the front counter',
       sentAt: new Date().toISOString(),
-      lines: [] as OrderLine[],
-      state: 'pending' as const,
+      lines: [],
+      state: 'pending',
     };
     this.remoteCharges.set(charge.id, charge);
-    const { tillId: _t, state: _s, ...wire } = charge;
-    this.emit(tillId, { type: 'remote_charge', charge: wire });
+    this.emit(tillId, { type: 'remote_charge', charge: toWire(charge) });
     return charge;
   }
 
@@ -431,26 +624,31 @@ export class Store {
   pendingRemoteCharges(tillId: string): RemoteCharge[] {
     return [...this.remoteCharges.values()]
       .filter((c) => c.tillId === tillId && c.state === 'pending')
-      .map(({ tillId: _t, state: _s, ...wire }) => wire);
+      .map(toWire);
   }
 
   acceptRemoteCharge(chargeId: string, tillId: string, baseUrl: string): PaymentSession {
     const c = this.remoteCharges.get(chargeId);
     if (!c || c.tillId !== tillId) throw new HttpError(404, 'Unknown remote charge');
+    // Accepting twice (a retried request) returns the payment the first accept created.
+    if (c.state === 'accepted' && c.paymentId && this.payments.has(c.paymentId)) return this.getPayment(c.paymentId);
     if (c.state !== 'pending') throw new HttpError(409, `Remote charge is ${c.state}`);
     c.state = 'accepted';
-    return this.createPayment(
+    const payment = this.createPayment(
       tillId,
       { lines: c.lines, subtotalCents: c.amountCents, tipCents: 0, reference: c.reference },
       baseUrl,
       'dashboard',
     );
+    c.paymentId = payment.id;
+    return payment;
   }
 
   dismissRemoteCharge(chargeId: string, tillId: string) {
     const c = this.remoteCharges.get(chargeId);
     if (!c || c.tillId !== tillId) throw new HttpError(404, 'Unknown remote charge');
     c.state = 'dismissed';
+    this.changed();
   }
 
   softwareUpdate(version: string) {
@@ -461,11 +659,10 @@ export class Store {
 
   private seedHistory(tillId: string) {
     const at = (h: number, m: number) => {
-      const d = new Date();
-      d.setHours(h, m, 0, 0);
-      // Keep sample history in the past even when paired early in the morning.
-      if (d.getTime() > Date.now()) d.setTime(Date.now() - (14 - h) * 60_000 - m * 1000);
-      return d.toISOString();
+      let t = todayAt(merchant.timezone, h, m);
+      // Keep sample history in the past (and still today) even when paired early in the morning.
+      if (t > Date.now()) t = Math.max(startOfDayIn(merchant.timezone), Date.now() - (14 - h) * 60_000 - m * 1000);
+      return new Date(t).toISOString();
     };
     const line = (name: string, detail: string, unitCents: number, qty = 1): OrderLine => ({
       id: id('ln'),
@@ -543,4 +740,8 @@ export class Store {
       this.payments.set(pid, p);
     }
   }
+}
+
+function toWire({ tillId: _t, state: _s, paymentId: _p, ...wire }: StoredRemoteCharge): RemoteCharge {
+  return wire;
 }

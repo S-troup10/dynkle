@@ -7,6 +7,8 @@ export interface Merchant {
   phone: string;
   email: string;
   walletAddress: string;
+  /** IANA time zone the merchant trades in. "Today" on the terminal starts at midnight here. */
+  timezone: string;
 }
 
 export interface Till {
@@ -101,8 +103,13 @@ export interface PaymentSession {
   lines: OrderLine[];
   subtotalCents: number;
   tipCents: number;
+  /** What the merchant receives: subtotal + tip. */
   totalCents: number;
   gstCents: number;
+  /**
+   * Network fee the customer pays on top of `totalCents`, in their wallet.
+   * It is not part of the sale total and the merchant never receives it.
+   */
   customerFeeCents: number;
   createdAt: string;
   expiresAt: string;
@@ -117,13 +124,6 @@ export interface PaymentSession {
   failureReason?: string;
   txSignature?: string;
   completedAt?: string;
-}
-
-export interface CreatePaymentRequest {
-  lines: OrderLine[];
-  subtotalCents: number;
-  tipCents: number;
-  reference?: string;
 }
 
 export interface RemoteCharge {
@@ -156,4 +156,6 @@ export type ServerEvent =
   | { type: 'catalog.updated'; catalog: Catalog }
   | { type: 'settings.updated'; profile: TerminalProfile }
   | { type: 'terminal.unpaired' }
-  | { type: 'software_update'; version: string };
+  | { type: 'software_update'; version: string }
+  /** Sent every few seconds so the terminal can tell a quiet connection from a dead one. */
+  | { type: 'heartbeat'; at: string };
