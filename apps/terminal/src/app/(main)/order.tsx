@@ -99,12 +99,12 @@ function LineRow({ line, first }: { line: OrderLine; first: boolean }) {
         {detail ? <Text style={s.lineDetail}>{detail}</Text> : null}
       </View>
       {line.kind === 'custom' ? (
-        <RoundButton name="close" size={36} onPress={() => cart.remove(line.id)} testID={`remove-${line.name}`} />
+        <RoundButton name="close" size={36} label={`Remove ${line.name}`} onPress={() => cart.remove(line.id)} testID={`remove-${line.name}`} />
       ) : (
         <View style={s.stepper}>
-          <RoundButton name="minus" size={36} onPress={() => cart.changeQty(line.id, -1)} testID={`minus-${line.name}`} />
+          <RoundButton name="minus" size={36} label={`One fewer ${line.name}`} onPress={() => cart.changeQty(line.id, -1)} testID={`minus-${line.name}`} />
           <Text style={s.qty}>{line.qty}</Text>
-          <RoundButton name="plus" size={36} onPress={() => cart.changeQty(line.id, 1)} testID={`plus-${line.name}`} />
+          <RoundButton name="plus" size={36} label={`One more ${line.name}`} onPress={() => cart.changeQty(line.id, 1)} testID={`plus-${line.name}`} />
         </View>
       )}
       <Text style={s.lineTotal}>{formatMoney(line.unitCents * line.qty)}</Text>

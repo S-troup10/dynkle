@@ -9,7 +9,7 @@ import { Spinner } from './Spinner';
 
 export function QRCard({ value, size = 200 }: { value: string; size?: number }) {
   return (
-    <View style={[s.qrCard, { width: size + 40, height: size + 40 }]} testID="payment-qr" accessibilityLabel={value}>
+    <View style={[s.qrCard, { width: size + 40, height: size + 40 }]} testID="payment-qr" accessible accessibilityRole="image" accessibilityLabel="Payment QR code. Scan with the DYNK app or any Solana wallet.">
       <QRCode value={value} size={size} color={colors.ink} backgroundColor={colors.white} ecl="H" />
       <View style={s.qrLogo}>
         <Icon name="tap" size={20} color={colors.white} strokeWidth={2.4} />
@@ -31,7 +31,13 @@ export function MethodChips({ tap, connect, scan }: { tap: ChannelState; connect
       {chips.map((c) => {
         const ok = c.state === 'ready';
         return (
-          <View key={c.label} style={[s.chip, !ok && s.chipOff]} testID={`chip-${c.label.toLowerCase()}`}>
+          <View
+            key={c.label}
+            style={[s.chip, !ok && s.chipOff]}
+            testID={`chip-${c.label.toLowerCase()}`}
+            accessible
+            accessibilityLabel={`${c.label}: ${ok ? 'ready' : 'unavailable'}`}
+          >
             <Icon name={c.icon} size={22} color={ok ? colors.orange : colors.muted} />
             <Text style={s.chipLabel}>{c.label}</Text>
             <View style={s.chipStatus}>
@@ -49,7 +55,7 @@ export function PriceLock({ secondsLeft, totalSeconds }: { secondsLeft: number; 
   const pct = totalSeconds > 0 ? Math.max(0, Math.min(1, secondsLeft / totalSeconds)) : 0;
   return (
     <View style={{ gap: 8 }}>
-      <View style={s.lockRow}>
+      <View style={s.lockRow} accessible accessibilityLabel={`Price locked for ${Math.ceil(secondsLeft)} more seconds`}>
         <Text style={s.lockLabel}>Price locked</Text>
         <Text style={s.lockTime} testID="price-lock">{formatCountdown(secondsLeft)}</Text>
       </View>

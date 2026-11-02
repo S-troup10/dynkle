@@ -108,7 +108,7 @@ export default function EditItem() {
                   testID={`size-price-${i}`}
                 />
               </View>
-              <RoundButton name="close" size={36} onPress={() => setSizes((all) => all.filter((_, j) => j !== i))} />
+              <RoundButton name="close" size={36} label={`Remove size ${i + 1}`} onPress={() => setSizes((all) => all.filter((_, j) => j !== i))} />
             </View>
           ))}
           <Button

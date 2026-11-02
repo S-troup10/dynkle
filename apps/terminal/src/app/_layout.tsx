@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -15,14 +15,19 @@ import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useKeepAwake } from 'expo-keep-awake';
 import { startLiveConnection } from '@/api/live';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RemoteChargeOverlay } from '@/components/RemoteChargeOverlay';
+import { APP_VERSION } from '@/lib/config';
+import { installGlobalErrorHandler, log } from '@/lib/logger';
 import { useCheckout } from '@/state/checkout';
+import { usePrefs } from '@/state/prefs';
 import { useSession } from '@/state/session';
 import { useUi } from '@/state/ui';
 import { kiosk } from '@/native/hardware';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+installGlobalErrorHandler();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -43,9 +48,13 @@ export default function RootLayout() {
   const apiUrl = useSession((s) => s.apiUrl);
   const updateVersion = useUi((s) => s.updateVersion);
   const [ready, setReady] = useState(false);
+  const restored = useRef(false);
 
   useEffect(() => {
-    useSession.getState().hydrate().then(() => setReady(true));
+    Promise.all([log.hydrate(), usePrefs.getState().hydrate(), useSession.getState().hydrate()]).then(() => {
+      log.info('Terminal started', { version: APP_VERSION, phase: useSession.getState().phase });
+      setReady(true);
+    });
     return NetInfo.addEventListener((s) => {
       const ssid = s.type === 'wifi' ? ((s.details as { ssid?: string | null } | null)?.ssid ?? null) : null;
       useUi.getState().setNet(s.isConnected !== false, s.type, ssid);
@@ -66,6 +75,19 @@ export default function RootLayout() {
     return startLiveConnection(queryClient);
   }, [phase, token, apiUrl]);
 
+  // The app was restarted (or crashed) mid-sale: put the payment back on screen.
+  useEffect(() => {
+    // Wait for fonts too: the navigator isn't mounted until then.
+    if (!ready || !fontsLoaded || phase !== 'paired' || restored.current) return;
+    restored.current = true;
+    useCheckout
+      .getState()
+      .restore()
+      .then((found) => {
+        if (found) router.push('/checkout');
+      });
+  }, [ready, fontsLoaded, phase]);
+
   useEffect(() => {
     if (phase !== 'paired') {
       useCheckout.getState().finish(false);
@@ -82,6 +104,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
+        <ErrorBoundary>
         <StatusBar style="dark" hidden={Platform.OS === 'android'} />
         <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
           <Stack.Protected guard={phase === 'onboarding'}>
@@ -96,6 +119,7 @@ export default function RootLayout() {
           </Stack.Protected>
         </Stack>
         {phase === 'paired' ? <RemoteChargeOverlay /> : null}
+        </ErrorBoundary>
       </SafeAreaProvider>
     </QueryClientProvider>
   );

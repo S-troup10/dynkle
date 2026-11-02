@@ -30,6 +30,13 @@ export function confirmationSteps(status: PaymentStatus): { label: string; state
   ];
 }
 
+const LIVE: PaymentStatus[] = ['armed', 'wallet_connected', 'approved', 'confirming'];
+
+/** The customer can still pay (or the chain is still confirming). */
+export function isLive(status: PaymentStatus): boolean {
+  return LIVE.includes(status);
+}
+
 /** Ignore stale or out-of-order status pushes for a payment we've already moved past. */
 const ORDER: PaymentStatus[] = ['armed', 'wallet_connected', 'approved', 'confirming', 'paid', 'failed', 'expired', 'cancelled'];
 

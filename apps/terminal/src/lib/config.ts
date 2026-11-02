@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 /** The mock merchant dashboard deployed on Render (see render.yaml). */
@@ -14,4 +15,5 @@ export function defaultApiUrl(): string {
   return HOSTED_DASHBOARD_URL;
 }
 
-export const APP_VERSION = '1.0.0';
+/** The app's version, from app.json ("expo.version"). */
+export const APP_VERSION: string = Constants.expoConfig?.version ?? '0.0.0';

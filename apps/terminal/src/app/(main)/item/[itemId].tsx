@@ -49,9 +49,9 @@ export default function SizePicker() {
       <View style={s.qtyRow}>
         <Text style={s.qtyLabel}>Quantity</Text>
         <View style={s.stepper}>
-          <RoundButton name="minus" size={48} onPress={() => setQty((q) => Math.max(1, q - 1))} testID="qty-minus" />
+          <RoundButton name="minus" size={48} label="One fewer" onPress={() => setQty((q) => Math.max(1, q - 1))} testID="qty-minus" />
           <Text style={s.qty}>{qty}</Text>
-          <RoundButton name="plus" size={48} onPress={() => setQty((q) => Math.min(99, q + 1))} testID="qty-plus" />
+          <RoundButton name="plus" size={48} label="One more" onPress={() => setQty((q) => Math.min(99, q + 1))} testID="qty-plus" />
         </View>
       </View>
       <Button title={`Add to order · ${formatMoney(variant.priceCents * qty)}`} onPress={add} testID="add-to-order" />

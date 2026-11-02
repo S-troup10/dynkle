@@ -96,6 +96,20 @@ await shot('paid');
 step('keypad sale with 15% tip paid');
 await id('new-sale').click();
 
+// ---------- App restarts mid-sale: the charge comes back ----------
+await id('keypad-charge').waitFor();
+await keys('500');
+await id('keypad-charge').click();
+await id('no-tip').click();
+await id('armed-amount').waitFor();
+await page.reload();
+await id('armed-amount').waitFor({ timeout: 15_000 });
+if ((await id('armed-amount').innerText()) !== '$5.00') throw new Error('restored charge amount wrong');
+await dev('/dev/payments/latest/approve');
+await id('paid-title').waitFor({ timeout: 10_000 });
+step('charge restored after a reload, then paid');
+await id('new-sale').click();
+
 // ---------- Items -> order ----------
 await id('tab-items').click();
 await id('category-Coffee').waitFor();

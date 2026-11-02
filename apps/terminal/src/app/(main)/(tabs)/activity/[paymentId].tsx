@@ -51,7 +51,8 @@ export default function TransactionDetail() {
           <Divider />
           <Line label="Tip" value={formatMoney(p.tipCents)} />
           <Divider />
-          <Line label="Customer fee" value={formatFee(p.customerFeeCents)} />
+          {/* Paid by the customer on top of the total, in their wallet: not part of the sale. */}
+          <Line label="Customer fee · paid on top" value={formatFee(p.customerFeeCents)} />
           {p.customerWallet ? (
             <>
               <Divider />

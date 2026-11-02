@@ -5,10 +5,18 @@ import { Icon } from '@/components/Icon';
 import { List, Row, Screen, SectionLabel, T } from '@/components/ui';
 import { touchAdmin, useAdminGuard } from '@/hooks/useAdmin';
 import { formatCountdown } from '@/lib/format';
+import { log } from '@/lib/logger';
 import { storage } from '@/lib/storage';
+import { sendLogsToSupport } from '@/lib/supportLogs';
 import { kiosk, simulatedHardware, wifi, nfc } from '@/native/hardware';
+import { usePrefs } from '@/state/prefs';
 import { useSession } from '@/state/session';
 import { colors, fonts } from '@/theme';
+
+function notify(title: string, msg: string) {
+  if (Platform.OS === 'web') window.alert(`${title}\n\n${msg}`);
+  else Alert.alert(title, msg);
+}
 
 function confirm(title: string, msg: string, action: string, onYes: () => void) {
   if (Platform.OS === 'web') {
@@ -50,8 +58,13 @@ export default function Admin() {
             label="Send logs to support"
             sub="Helps us fix problems faster"
             chevron
-            onPress={act(() => confirm('Logs sent', 'Support will be in touch if they need anything else.', 'OK', () => undefined))}
+            onPress={act(async () => {
+              const { ok, message } = await sendLogsToSupport();
+              notify(ok ? 'Logs sent' : 'Logs not sent', message);
+            })}
+            testID="admin-send-logs"
           />
+          <Row icon="menu" label="View logs" sub="What the terminal has been doing" chevron onPress={act(() => router.push('/settings/logs'))} testID="view-logs" />
           <Row
             icon="wifi"
             label="Forget saved networks"
@@ -111,6 +124,8 @@ export default function Admin() {
             onPress={act(() =>
               confirm('Factory reset?', 'This wipes the pairing, saved networks and settings on this terminal.', 'Reset', async () => {
                 await storage.set('dynkle.apiUrl', null);
+                usePrefs.getState().reset();
+                log.clear();
                 await wifi.forgetAll();
                 useSession.getState().forget();
                 setTimeout(() => router.replace('/welcome'), 0);

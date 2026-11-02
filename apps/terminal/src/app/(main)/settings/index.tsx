@@ -1,11 +1,12 @@
-import { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { BackHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
 import { List, Row, Screen, SectionLabel, StatusText } from '@/components/ui';
 import { APP_VERSION } from '@/lib/config';
+import { playSound } from '@/lib/sound';
 import { bluetooth, nfc, wifi } from '@/native/hardware';
+import { usePrefs, useSoundEnabled } from '@/state/prefs';
 import { useSession } from '@/state/session';
 import { useOffline, useUi } from '@/state/ui';
 import { colors, fonts, radius } from '@/theme';
@@ -19,7 +20,7 @@ export default function Settings() {
   const profile = useSession((s) => s.profile);
   const net = useUi((s) => s);
   const { offline } = useOffline();
-  const [sound, setSound] = useState(profile?.settings.soundEnabled ?? true);
+  const sound = useSoundEnabled();
   if (!profile) return null;
   const { merchant, till, settings } = profile;
   const network = !net.netConnected
@@ -61,7 +62,17 @@ export default function Settings() {
 
         <SectionLabel>TERMINAL</SectionLabel>
         <List>
-          <Row label="Sound" value={sound ? 'On' : 'Off'} onPress={() => setSound((v) => !v)} />
+          <Row
+            label="Sound"
+            value={sound ? 'On' : 'Off'}
+            onPress={() => {
+              const next = !sound;
+              usePrefs.getState().setSound(next);
+              if (next) playSound('paid');
+            }}
+            accessibilityHint="Turns the paid and failed sounds on or off"
+            testID="settings-sound"
+          />
           <Row label="Brightness" value="Auto" />
           <Row label="Tips" value={`${settings.tipsEnabled ? 'On' : 'Off'} · set in dashboard`} />
           <Row

@@ -30,7 +30,9 @@ export function Keypad({
                 key={k}
                 onPress={() => onKey(k)}
                 disabled={disabled}
-                accessibilityLabel={k === 'del' ? 'Delete' : k}
+                accessibilityRole="button"
+                accessibilityLabel={k === 'del' ? 'Delete' : k === '00' ? 'Double zero' : k}
+                accessibilityState={{ disabled: !!disabled }}
                 testID={`key-${k}`}
                 style={({ pressed }) => [s.cell, s.key, { height: keyHeight }, pressed && { backgroundColor: colors.orangeTint }]}
               >
