@@ -3,4 +3,5 @@ export * from './layout';
 export * from './text';
 export * from './buttons';
 export * from './bits';
+export * from './motion';
 export { MAX_FONT_SCALE, styles } from './styles';

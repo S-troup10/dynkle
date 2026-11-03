@@ -3,7 +3,7 @@ import { formatMoney, type PaymentSession } from '@dynkle/shared';
 import { MerchantHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
 import { Steps } from '@/components/Payment';
-import { Button, Headline, Pill, Screen } from '@/components/ui';
+import { Button, Headline, Pill, Pulse, Screen } from '@/components/ui';
 import { useCheckout } from '@/state/checkout';
 import { confirmationSteps } from '@/state/checkoutLogic';
 import { useSession } from '@/state/session';
@@ -51,8 +51,8 @@ export function Confirming({ payment }: { payment: PaymentSession }) {
 
 function Waves() {
   return (
-    <View style={{ width: 40, height: 80, justifyContent: 'center' }}>
+    <Pulse style={{ width: 40, height: 80, justifyContent: 'center' }}>
       <Icon name="tap" size={44} color={colors.orange} />
-    </View>
+    </Pulse>
   );
 }

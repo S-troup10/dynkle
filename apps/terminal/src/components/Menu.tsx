@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { categorySummary, formatMoney, type Catalog, type Category } from '@dynkle/shared';
+import { FadeInUp, usePressScale } from '@/components/ui/motion';
+import { haptics } from '@/lib/haptics';
 import { useCart } from '@/state/cart';
 import { cartCount, cartTotal } from '@/state/cartLogic';
 import { colors, fonts, radius, shadows } from '@/theme';
@@ -9,23 +11,36 @@ import { Icon } from './Icon';
 export function CategoryGrid({ catalog, categories }: { catalog: Catalog; categories: Category[] }) {
   return (
     <View style={s.grid}>
-      {categories.map((c) => (
-        <Pressable
-          key={c.id}
-          onPress={() => router.push({ pathname: '/items/[categoryId]', params: { categoryId: c.id } })}
-          style={({ pressed }) => [s.tile, pressed && { backgroundColor: colors.orangeTint }]}
-          testID={`category-${c.name}`}
-        >
-          <View style={s.letter}>
-            <Text style={s.letterText}>{c.name.charAt(0).toUpperCase()}</Text>
-          </View>
-          <Text style={s.tileName} numberOfLines={1}>
-            {c.name}
-          </Text>
-          <Text style={s.tileSub}>{categorySummary(catalog, c.id)}</Text>
-        </Pressable>
+      {categories.map((c, i) => (
+        <FadeInUp key={c.id} delay={Math.min(i, 6) * 30} style={{ width: '47%', flexGrow: 1 }}>
+          <CategoryTile catalog={catalog} category={c} />
+        </FadeInUp>
       ))}
     </View>
+  );
+}
+
+function CategoryTile({ catalog, category: c }: { catalog: Catalog; category: Category }) {
+  const { style: pressStyle, handlers } = usePressScale(0.96);
+  return (
+    <Pressable
+      onPress={() => {
+        haptics.tap();
+        router.push({ pathname: '/items/[categoryId]', params: { categoryId: c.id } });
+      }}
+      testID={`category-${c.name}`}
+      {...handlers}
+    >
+      <Animated.View style={[s.tile, pressStyle]}>
+        <View style={s.letter}>
+          <Text style={s.letterText}>{c.name.charAt(0).toUpperCase()}</Text>
+        </View>
+        <Text style={s.tileName} numberOfLines={1}>
+          {c.name}
+        </Text>
+        <Text style={s.tileSub}>{categorySummary(catalog, c.id)}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -33,18 +48,30 @@ export function CategoryGrid({ catalog, categories }: { catalog: Catalog; catego
 export function OrderBar() {
   const lines = useCart((st) => st.lines);
   const count = cartCount(lines);
+  const { style: pressStyle, handlers } = usePressScale(0.95);
   if (count === 0) return null;
   return (
     <View style={s.barWrap} pointerEvents="box-none">
-      <View style={s.bar}>
-        <Text style={s.barText}>
-          {count} {count === 1 ? 'item' : 'items'} · {formatMoney(cartTotal(lines))}
-        </Text>
-        <Pressable style={s.barBtn} onPress={() => router.push('/order')} testID="view-order">
-          <Text style={s.barBtnText}>View order</Text>
-          <Icon name="arrowRight" size={16} color={colors.white} />
-        </Pressable>
-      </View>
+      <FadeInUp distance={24}>
+        <View style={s.bar}>
+          <Text style={s.barText}>
+            {count} {count === 1 ? 'item' : 'items'} · {formatMoney(cartTotal(lines))}
+          </Text>
+          <Pressable
+            onPress={() => {
+              haptics.tap();
+              router.push('/order');
+            }}
+            testID="view-order"
+            {...handlers}
+          >
+            <Animated.View style={[s.barBtn, pressStyle]}>
+              <Text style={s.barBtnText}>View order</Text>
+              <Icon name="arrowRight" size={16} color={colors.white} />
+            </Animated.View>
+          </Pressable>
+        </View>
+      </FadeInUp>
     </View>
   );
 }
@@ -52,8 +79,6 @@ export function OrderBar() {
 const s = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tile: {
-    width: '47%',
-    flexGrow: 1,
     backgroundColor: colors.white,
     borderRadius: radius.card,
     padding: 16,

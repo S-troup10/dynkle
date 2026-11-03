@@ -1,4 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { usePressScale } from '@/components/ui/motion';
+import { haptics } from '@/lib/haptics';
 import { colors, fonts, radius, shadows } from '@/theme';
 import { Icon } from './Icon';
 
@@ -26,31 +28,55 @@ export function Keypad({
             k === '' ? (
               <View key={`blank-${i}`} style={[s.cell, { height: keyHeight }]} />
             ) : (
-              <Pressable
-                key={k}
-                onPress={() => onKey(k)}
-                disabled={disabled}
-                accessibilityRole="button"
-                accessibilityLabel={k === 'del' ? 'Delete' : k === '00' ? 'Double zero' : k}
-                accessibilityState={{ disabled: !!disabled }}
-                testID={`key-${k}`}
-                style={({ pressed }) => [s.cell, s.key, { height: keyHeight }, pressed && { backgroundColor: colors.orangeTint }]}
-              >
-                {k === 'del' ? (
-                  mode === 'pin' ? (
-                    <Text style={s.delText}>Del</Text>
-                  ) : (
-                    <Icon name="backspace" size={26} strokeWidth={2} />
-                  )
-                ) : (
-                  <Text style={s.keyText}>{k}</Text>
-                )}
-              </Pressable>
+              <Key key={k} k={k} mode={mode} keyHeight={keyHeight} disabled={disabled} onKey={onKey} />
             ),
           )}
         </View>
       ))}
     </View>
+  );
+}
+
+function Key({
+  k,
+  mode,
+  keyHeight,
+  disabled,
+  onKey,
+}: {
+  k: string;
+  mode: 'money' | 'pin';
+  keyHeight: number;
+  disabled?: boolean;
+  onKey: (key: string) => void;
+}) {
+  const { style: pressStyle, handlers } = usePressScale(0.93);
+  return (
+    <Pressable
+      onPress={() => {
+        haptics.tap();
+        onKey(k);
+      }}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={k === 'del' ? 'Delete' : k === '00' ? 'Double zero' : k}
+      accessibilityState={{ disabled: !!disabled }}
+      testID={`key-${k}`}
+      style={[s.cell, { height: keyHeight }]}
+      {...handlers}
+    >
+      <Animated.View style={[s.key, { height: keyHeight }, pressStyle]}>
+        {k === 'del' ? (
+          mode === 'pin' ? (
+            <Text style={s.delText}>Del</Text>
+          ) : (
+            <Icon name="backspace" size={26} strokeWidth={2} />
+          )
+        ) : (
+          <Text style={s.keyText}>{k}</Text>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 

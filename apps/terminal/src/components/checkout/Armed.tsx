@@ -4,7 +4,7 @@ import { formatMoney, type PaymentSession } from '@dynkle/shared';
 import { MerchantHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
 import { Banner, MethodChips, PriceLock, QRCard } from '@/components/Payment';
-import { Button, Screen, T } from '@/components/ui';
+import { Button, Pulse, Screen, T } from '@/components/ui';
 import { useCountdown } from '@/hooks/useCountdown';
 import { nfc } from '@/native/hardware';
 import { useUi } from '@/state/ui';
@@ -36,7 +36,9 @@ export function Armed({ payment }: { payment: PaymentSession }) {
         tillDot={false}
         right={
           <View style={s.armed}>
-            <View style={s.armedDot} />
+            <Pulse>
+              <View style={s.armedDot} />
+            </Pulse>
             <Text style={s.armedText}>Armed</Text>
           </View>
         }

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { formatMoney, type PaymentSession } from '@dynkle/shared';
 import { MerchantHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
-import { Button, Halo, Screen, T } from '@/components/ui';
+import { Button, FadeInUp, Halo, PopIn, Screen, T } from '@/components/ui';
 import { useCheckout } from '@/state/checkout';
 import { useSession } from '@/state/session';
 import { colors } from '@/theme';
@@ -20,16 +20,20 @@ export function Expired({ payment }: { payment: PaymentSession }) {
     <Screen>
       <MerchantHeader showTill={false} />
       <View style={s.center}>
-        <Halo color={colors.amberTint} size={100}>
-          <View style={[s.outcomeBadge, { backgroundColor: colors.amber }]}>
-            <Icon name="clock" size={30} color={colors.amberInk} strokeWidth={2.4} />
-          </View>
-        </Halo>
-        <Text style={s.outcomeTitle}>Price lock expired</Text>
-        <Text style={s.outcomeAmount}>{formatMoney(payment.totalCents)}</Text>
-        <T style={{ textAlign: 'center', paddingHorizontal: 28 }}>
-          The customer didn’t pay within {lock} seconds, so the price was released. Nothing was charged.
-        </T>
+        <PopIn>
+          <Halo color={colors.amberTint} size={100}>
+            <View style={[s.outcomeBadge, { backgroundColor: colors.amber }]}>
+              <Icon name="clock" size={30} color={colors.amberInk} strokeWidth={2.4} />
+            </View>
+          </Halo>
+        </PopIn>
+        <FadeInUp delay={100} style={{ alignItems: 'center' }}>
+          <Text style={s.outcomeTitle}>Price lock expired</Text>
+          <Text style={s.outcomeAmount}>{formatMoney(payment.totalCents)}</Text>
+          <T style={{ textAlign: 'center', paddingHorizontal: 28 }}>
+            The customer didn’t pay within {lock} seconds, so the price was released. Nothing was charged.
+          </T>
+        </FadeInUp>
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 20, gap: 12 }}>
         <Button

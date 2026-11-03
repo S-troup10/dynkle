@@ -4,9 +4,10 @@ import { router } from 'expo-router';
 import { formatMoney, formatTokenAmount, type PaymentSession } from '@dynkle/shared';
 import { MerchantHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
-import { Button, Halo, Screen } from '@/components/ui';
+import { Button, FadeInUp, Halo, PopIn, Screen } from '@/components/ui';
 import { useCountdown } from '@/hooks/useCountdown';
 import { methodLabel } from '@/lib/format';
+import { haptics } from '@/lib/haptics';
 import { playSound } from '@/lib/sound';
 import { colors, fonts } from '@/theme';
 import { endSale } from './actions';
@@ -23,6 +24,7 @@ export function Paid({ payment }: { payment: PaymentSession }) {
 
   useEffect(() => {
     playSound('paid');
+    haptics.success();
     AccessibilityInfo.announceForAccessibility(`Paid, ${formatMoney(payment.totalCents)}`);
   }, [payment.id, payment.totalCents]);
 
@@ -37,27 +39,31 @@ export function Paid({ payment }: { payment: PaymentSession }) {
         PAID.
       </Text>
       <View style={s.center}>
-        <Halo color="rgba(255,255,255,0.18)" size={140}>
-          <View style={s.paidCheck}>
-            <Icon name="check" size={48} color={colors.orange} strokeWidth={2.8} />
-          </View>
-        </Halo>
-        <Text style={s.paidTitle} testID="paid-title">
-          Paid
-        </Text>
-        <Text style={s.paidAmount}>{formatMoney(payment.totalCents)}</Text>
-        <Text style={s.paidSub}>{methodLabel(payment.method)} · confirmed on Solana</Text>
-        {payment.dynk && payment.verification?.receivedRaw ? (
-          <Text style={s.paidSub} testID="paid-dynk">
-            {formatTokenAmount(payment.verification.receivedRaw, payment.dynk.decimals)} DYNK received
+        <PopIn>
+          <Halo color="rgba(255,255,255,0.18)" size={140}>
+            <View style={s.paidCheck}>
+              <Icon name="check" size={48} color={colors.orange} strokeWidth={2.8} />
+            </View>
+          </Halo>
+        </PopIn>
+        <FadeInUp delay={120} style={{ alignItems: 'center' }}>
+          <Text style={s.paidTitle} testID="paid-title">
+            Paid
           </Text>
-        ) : null}
-        {payment.dynk && payment.verification?.excessRaw ? (
-          // Customers type the amount today: an overpayment is accepted but flagged for a refund.
-          <Text style={[s.paidSub, { fontFamily: fonts.bodySemi }]} testID="paid-excess">
-            Overpaid by {formatTokenAmount(payment.verification.excessRaw, payment.dynk.decimals)} DYNK — refund the difference
-          </Text>
-        ) : null}
+          <Text style={s.paidAmount}>{formatMoney(payment.totalCents)}</Text>
+          <Text style={s.paidSub}>{methodLabel(payment.method)} · confirmed on Solana</Text>
+          {payment.dynk && payment.verification?.receivedRaw ? (
+            <Text style={s.paidSub} testID="paid-dynk">
+              {formatTokenAmount(payment.verification.receivedRaw, payment.dynk.decimals)} DYNK received
+            </Text>
+          ) : null}
+          {payment.dynk && payment.verification?.excessRaw ? (
+            // Customers type the amount today: an overpayment is accepted but flagged for a refund.
+            <Text style={[s.paidSub, { fontFamily: fonts.bodySemi }]} testID="paid-excess">
+              Overpaid by {formatTokenAmount(payment.verification.excessRaw, payment.dynk.decimals)} DYNK — refund the difference
+            </Text>
+          ) : null}
+        </FadeInUp>
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 16, gap: 12 }}>
         <Button

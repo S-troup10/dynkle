@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { Armed, Confirming, Expired, Failed, Paid, Processing, backToSelling } from '@/components/checkout';
-import { Screen } from '@/components/ui';
+import { FadeInUp, Screen } from '@/components/ui';
 import { startTapToPay } from '@/lib/tapToPay';
 import { nfc } from '@/native/hardware';
 import { usePrefs } from '@/state/prefs';
@@ -46,24 +46,35 @@ export default function Checkout() {
       </Screen>
     );
 
-  switch (checkoutView(payment.status)) {
-    case 'armed':
-      return <Armed payment={payment} />;
-    case 'confirming':
-      return <Confirming payment={payment} />;
-    case 'processing':
-      return <Processing payment={payment} />;
-    case 'paid':
-      return <Paid payment={payment} />;
-    case 'failed':
-      return <Failed payment={payment} />;
-    case 'expired':
-      return <Expired payment={payment} />;
-    default:
-      return (
-        <Screen>
-          <View />
-        </Screen>
-      );
-  }
+  const view = checkoutView(payment.status);
+  const screen = (() => {
+    switch (view) {
+      case 'armed':
+        return <Armed payment={payment} />;
+      case 'confirming':
+        return <Confirming payment={payment} />;
+      case 'processing':
+        return <Processing payment={payment} />;
+      case 'paid':
+        return <Paid payment={payment} />;
+      case 'failed':
+        return <Failed payment={payment} />;
+      case 'expired':
+        return <Expired payment={payment} />;
+      default:
+        return null;
+    }
+  })();
+  if (!screen)
+    return (
+      <Screen>
+        <View />
+      </Screen>
+    );
+  // Each checkout state fades/lifts in as its own screen, instead of snapping to the next one.
+  return (
+    <FadeInUp replayKey={view} style={{ flex: 1 }} distance={10}>
+      {screen}
+    </FadeInUp>
+  );
 }
