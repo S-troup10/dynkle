@@ -56,8 +56,8 @@
     "preset": "jest-expo",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/android/",
-      "/ios/"
+      "<rootDir>/android/",
+      "<rootDir>/ios/"
     ],
     "setupFiles": [
       "./jest.setup.js"
