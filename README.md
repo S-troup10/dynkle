@@ -73,6 +73,33 @@ On Android, `dynkle-nfc` emulates an NFC Forum Type 4 tag through host card emul
 
 In the web preview these fall back to simulated hardware. **Admin → Simulate tap failure** previews the "Tap unavailable" state.
 
+## DYNK app Tap to Pay (Bluetooth)
+
+Tap to Pay in the DYNK app is **Bluetooth LE, not NFC**. The terminal plays the DYNK app's _receiver_: it runs a GATT server that serves a small signed session, and the customer's phone (the _sender_) connects when it's held against the terminal, reads the session, pays on Solana itself, and writes its status back. This is phase 1 of the integration spec. It works with today's DYNK app on iPhone and Android, with no app release.
+
+|                               |                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GATT service / characteristic | `7a1e8f10-7a2c-4b7e-9b7a-1f6a2e6b9c10` / `7a1e8f11-7a2c-4b7e-9b7a-1f6a2e6b9c10`, READ + WRITE, no pairing                                                                                                                                                                                                                                    |
+| Session (READ)                | `{"v":2,"n":<uuid>,"e":<expiry ms>,"d":<name ≤24>,"a":{"SOL":<merchant wallet>},"s":<bs58 ed25519 sig of n>}`, ≤ 480 bytes, 60 s lifetime, single use                                                                                                                                                                                        |
+| Phone writes                  | `{"transferStatus":"processing"\|"confirmed"\|"failed","txSignature",…}` (iPhones may split this into a prepared write: the module reassembles it)                                                                                                                                                                                           |
+| Native module                 | `apps/terminal/modules/dynkle-ble` (Kotlin). Waits for the service before advertising, reassembles prepared writes, stops advertising and refuses other phones once one says `processing`, reports disconnects, and has configurable TX power (**Admin → Tap to Pay range**: tune it on the FP9840 so about 3 cm triggers and 30 cm doesn't) |
+
+**How a charge goes:** every charge gets a DYNK quote (`payment.dynk`) at the dashboard's `dynkPerAud` rate. Today the customer types the amount in the DYNK app, so the armed screen shows exactly what to enter. The raw amount is unique among open charges to the same wallet, so the chain can tell two tills apart. The terminal fetches a signed session (`POST /payments/:id/ble-session`), swaps in a new one while at least 15 s are left on the current one, and reports the phone's read, `processing`, `failed` and disconnect (`POST /payments/:id/ble-event`). On `confirmed` it hands over the transaction signature (`POST /payments/:id/claim-signature`).
+
+**The terminal never decides "Paid".** The dashboard checks the transaction on chain: no error, the merchant's balance of the DYNK mint went up by the charge's amount, inside the charge window, and the signature hasn't paid another charge. Underpaid → `failed` with `failureCode: "wrong_amount"` and the shortfall. Overpaid → `paid` with the excess flagged. A different token → nothing received → `wrong_amount`. A **chain watcher** also polls the merchant's token account, so a lost or garbled Bluetooth write doesn't lose a payment.
+
+**Trying it in the web preview:** the dev panel's live charge has _DYNK phone, Bluetooth Tap to Pay_ buttons: pays the right amount, types 10% less, types 1 DYNK more, sends SOL instead, confirmed write lost, fails in the app. The pretend phone checks the session the way the app does (expiry, single-use nonce, signature), "pays" on an in-memory chain, and drives the terminal's simulated Bluetooth peripheral over the live connection.
+
+| Variable               | What it does                                                                                                                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MERCHANT_SOL_SECRET`  | bs58 secret key of the merchant receiving wallet. Sessions are signed, so customers see a verified merchant and pay straight away. Without it, a wallet is generated per run                    |
+| `MERCHANT_SOL_ADDRESS` | Receiving address without the key: sessions go out **unsigned**, and every customer has to confirm the address first                                                                            |
+| `SOLANA_RPC_URL`       | Real Solana JSON-RPC (e.g. Helius). Without it, payments are checked against the in-memory mock chain                                                                                           |
+| `DYNK_MINT`            | DYNK mint the customers' app pays with. Defaults to the **devnet** mint `8RscFZC7rooxRAaXGPomxwp5QqhrQMDRjvpx2qViEKoT` that the app defaults to: confirm the production mint with the DYNK team |
+| `DYNK_DECIMALS`        | Mint decimals. Read from chain when `SOLANA_RPC_URL` is set, 6 on the mock chain                                                                                                                |
+
+Phase 2 (the terminal sets the amount and a charge reference in the session) needs a DYNK app and DYNK backend change and isn't built yet.
+
 ## Mock dashboard API
 
 These endpoints are what the real merchant dashboard needs to provide.
@@ -146,7 +173,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs the checks and the e2e walk-thr
 
 ## Not in V1
 
-- Bluetooth "DCAP" tap-to-connect (the **Connect** chip is wired up, and the dev panel simulates it)
+- DYNK Tap to Pay phase 2 (terminal-set amount and on-chain charge reference) and phase 3 (phone signs, terminal broadcasts)
 - Real Solana settlement and the real merchant dashboard (both are mocked)
 - The production pairing/connection protocol
 - Promo codes

@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { log } from '@/lib/logger';
+import { ble } from '@/native/hardware';
 import { useSession } from '@/state/session';
 import { useCheckout } from '@/state/checkout';
 import { useUi } from '@/state/ui';
@@ -44,6 +45,10 @@ export function handleServerEvent(event: ServerEvent, queryClient: QueryClient) 
       useUi.getState().setUpdate(event.version);
       break;
     case 'heartbeat':
+      break;
+    case 'dev.ble':
+      // Web preview: the dev panel's pretend DYNK phone tapping the simulated Bluetooth peripheral.
+      ble.simulate(event);
       break;
   }
 }

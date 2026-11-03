@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import { Armed, Confirming, Expired, Failed, Paid, Processing, backToSelling } from '@/components/checkout';
 import { Screen } from '@/components/ui';
+import { startTapToPay } from '@/lib/tapToPay';
 import { nfc } from '@/native/hardware';
+import { usePrefs } from '@/state/prefs';
 import { useCheckout } from '@/state/checkout';
 import { checkoutView, isLive } from '@/state/checkoutLogic';
 import { useUi } from '@/state/ui';
@@ -24,6 +26,14 @@ export default function Checkout() {
     nfc.arm(nfcUri);
     return () => nfc.arm(null);
   }, [nfcUri]);
+
+  // DYNK app Tap to Pay over Bluetooth: runs from arming until the charge is over. It keeps going after
+  // the phone says "processing" (advertising stops) so the phone's "confirmed" write still arrives.
+  const tapToPayCharge = payment?.dynk && isLive(payment.status) ? payment.id : null;
+  useEffect(() => {
+    if (!tapToPayCharge) return;
+    return startTapToPay(tapToPayCharge, { txPower: usePrefs.getState().bleTxPower });
+  }, [tapToPayCharge]);
 
   useEffect(() => {
     if (payment?.status === 'cancelled') backToSelling();

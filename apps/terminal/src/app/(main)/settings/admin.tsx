@@ -29,8 +29,12 @@ function confirm(title: string, msg: string, action: string, onYes: () => void) 
   ]);
 }
 
+const TX_ORDER = ['high', 'medium', 'low', 'ultraLow'] as const;
+const TX_LABEL = { high: 'High', medium: 'Medium', low: 'Low', ultraLow: 'Ultra low' } as const;
+
 export default function Admin() {
   const left = useAdminGuard();
+  const bleTxPower = usePrefs((p) => p.bleTxPower);
   const merchant = useSession((s) => s.profile?.merchant.name);
   const act = (fn: () => void) => () => {
     touchAdmin();
@@ -115,6 +119,15 @@ export default function Admin() {
               onPress={act(() => kiosk.stop())}
             />
           ) : null}
+          <Row
+            icon="bluetooth"
+            label="Tap to Pay range"
+            sub={`Bluetooth power: ${TX_LABEL[bleTxPower]}. Lower means the phone must be closer.`}
+            value={TX_LABEL[bleTxPower]}
+            chevron
+            onPress={act(() => usePrefs.getState().setBleTxPower(TX_ORDER[(TX_ORDER.indexOf(bleTxPower) + 1) % TX_ORDER.length]))}
+            testID="ble-tx-power"
+          />
           {simulatedHardware ? (
             <Row
               icon="tapOff"

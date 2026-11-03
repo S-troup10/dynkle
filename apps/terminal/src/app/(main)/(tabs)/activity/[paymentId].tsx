@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { formatFee, formatMoney } from '@dynkle/shared';
+import { formatFee, formatMoney, formatTokenAmount } from '@dynkle/shared';
 import { api } from '@/api/client';
 import { BackHeader } from '@/components/Header';
 import { Button, Card, Divider, Pill, Screen, T } from '@/components/ui';
@@ -53,6 +53,27 @@ export default function TransactionDetail() {
           <Divider />
           {/* Paid by the customer on top of the total, in their wallet: not part of the sale. */}
           <Line label="Customer fee · paid on top" value={formatFee(p.customerFeeCents)} />
+          {p.dynk ? (
+            <>
+              <Divider />
+              <Line
+                label="DYNK"
+                value={`${p.verification?.receivedRaw ? formatTokenAmount(p.verification.receivedRaw, p.dynk.decimals) : p.dynk.amount} DYNK`}
+              />
+            </>
+          ) : null}
+          {p.verification?.excessRaw && p.dynk ? (
+            <>
+              <Divider />
+              <Line label="Overpaid" value={`${formatTokenAmount(p.verification.excessRaw, p.dynk.decimals)} DYNK`} />
+            </>
+          ) : null}
+          {p.txSignature ? (
+            <>
+              <Divider />
+              <Line label="Transaction" value={`${p.txSignature.slice(0, 6)}…${p.txSignature.slice(-6)}`} />
+            </>
+          ) : null}
           {p.customerWallet ? (
             <>
               <Divider />

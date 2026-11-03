@@ -12,10 +12,10 @@ import { s } from './styles';
 
 // ---------- 19: Customer confirming ----------
 
+const CHANNEL = { qr: 'QR', tap: 'tap', bluetooth: 'Bluetooth' } as const;
+
 export function Confirming({ payment }: { payment: PaymentSession }) {
-  const how = payment.method
-    ? `${payment.method.wallet} connected by ${payment.method.channel === 'qr' ? 'QR' : payment.method.channel}`
-    : 'Wallet connected';
+  const how = payment.method ? `${payment.method.wallet} connected by ${CHANNEL[payment.method.channel]}` : 'Wallet connected';
   return (
     <Screen glow="top">
       <MerchantHeader showTill={false} right={<Text style={s.headerAmount}>{formatMoney(payment.totalCents)}</Text>} />

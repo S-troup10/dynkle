@@ -57,6 +57,27 @@ describe('checkout screen', () => {
     expect(rearm).toHaveBeenCalled();
   });
 
+  it("doesn't claim nothing moved when a DYNK payment came up short", async () => {
+    show(
+      payment({
+        status: 'failed',
+        failureCode: 'wrong_amount',
+        failureReason: 'Received 400 DYNK of 432.18 DYNK: 32.18 DYNK short.',
+        verification: {
+          txSignature: 'sig',
+          result: 'wrong_amount',
+          receivedRaw: '400000000',
+          shortfallRaw: '32180000',
+          via: 'bluetooth',
+          checkedAt: '',
+        },
+      }),
+    );
+    await render(<Checkout />);
+    expect(screen.getByText(/Some DYNK did arrive/)).toBeTruthy();
+    expect(screen.queryByText(/No money has moved/)).toBeNull();
+  });
+
   it('offers to re-arm an expired charge', async () => {
     show(payment({ status: 'expired' }));
     await render(<Checkout />);

@@ -86,6 +86,7 @@ export const settingsPatchSchema = z
     tipPresets: z.array(z.number().min(0).max(100)).max(6),
     soundEnabled: z.boolean(),
     priceLockSeconds: z.number().positive().max(900),
+    dynkPerAud: z.number().positive().max(1e9),
   })
   .partial();
 

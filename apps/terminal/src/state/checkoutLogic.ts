@@ -40,5 +40,9 @@ const ORDER: PaymentStatus[] = ['armed', 'wallet_connected', 'approved', 'confir
 
 export function shouldApply(current: PaymentSession | null, incoming: PaymentSession): boolean {
   if (!current || current.id !== incoming.id) return false;
+  // Money moved: always show it, even over an "expired" screen.
+  if (incoming.status === 'paid') return true;
+  // The customer's phone walked away before paying: back to waiting for a tap.
+  if (current.status === 'wallet_connected' && incoming.status === 'armed') return true;
   return ORDER.indexOf(incoming.status) >= ORDER.indexOf(current.status);
 }

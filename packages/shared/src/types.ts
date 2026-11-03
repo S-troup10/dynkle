@@ -23,6 +23,8 @@ export interface TerminalSettings {
   currency: 'AUD';
   soundEnabled: boolean;
   priceLockSeconds: number;
+  /** DYNK per A$1, used to quote Bluetooth Tap to Pay charges. */
+  dynkPerAud: number;
 }
 
 export interface TerminalProfile {
@@ -116,6 +118,40 @@ export interface PaymentSession {
   failureReason?: string;
   txSignature?: string;
   completedAt?: string;
+  /** What the customer must send in DYNK for this charge (Bluetooth Tap to Pay). */
+  dynk?: DynkQuote;
+  /** On-chain check of the payment. The terminal never decides "Paid" by itself. */
+  verification?: PaymentVerification;
+  /** Machine-readable reason for `failed`. */
+  failureCode?: 'declined' | 'wrong_amount' | 'not_found' | 'transfer_failed' | 'wallet_failed';
+}
+
+export interface DynkQuote {
+  symbol: 'DYNK';
+  mint: string;
+  decimals: number;
+  /** Token units as a decimal string, e.g. "432.18". This is what the customer types today. */
+  amount: string;
+  /** amount × 10^decimals as an integer string. Unique among open charges to the same wallet. */
+  amountRaw: string;
+  /** Merchant receiving wallet (owner of the token account). */
+  recipient: string;
+  /** Price used: DYNK per A$1. */
+  rate: number;
+}
+
+export interface PaymentVerification {
+  txSignature: string;
+  result: 'paid' | 'wrong_amount' | 'failed' | 'not_found';
+  /** Raw token units received. */
+  receivedRaw?: string;
+  /** When paid more than asked: the excess (flag for a refund). */
+  excessRaw?: string;
+  /** When paid less than asked. */
+  shortfallRaw?: string;
+  /** How it was found: the phone's Bluetooth write, or the chain watcher. */
+  via: 'bluetooth' | 'watcher';
+  checkedAt: string;
 }
 
 export interface RemoteCharge {
@@ -150,4 +186,8 @@ export type ServerEvent =
   | { type: 'terminal.unpaired' }
   | { type: 'software_update'; version: string }
   /** Sent every few seconds so the terminal can tell a quiet connection from a dead one. */
-  | { type: 'heartbeat'; at: string };
+  | { type: 'heartbeat'; at: string }
+  /** Dev panel only: drives the simulated Bluetooth peripheral in the web preview (a pretend DYNK phone). */
+  | { type: 'dev.ble'; action: 'read'; device: string }
+  | { type: 'dev.ble'; action: 'write'; device: string; text: string }
+  | { type: 'dev.ble'; action: 'disconnect'; device: string };

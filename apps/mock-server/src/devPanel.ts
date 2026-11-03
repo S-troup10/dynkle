@@ -72,6 +72,8 @@ export const devPanelHtml = /* html */ `<!doctype html>
     <div class="row"><label><input type="checkbox" id="tips" onchange="saveSettings()" /> Tips on</label></div>
     <div class="row">Tip presets <input id="presets" style="width:120px" onchange="saveSettings()" /> <span class="muted">e.g. 10,15,20</span></div>
     <div class="row">Price lock <input id="lock" style="width:70px" onchange="saveSettings()" /> seconds</div>
+    <div class="row">DYNK per A$1 <input id="dynkRate" style="width:90px" onchange="saveSettings()" /></div>
+    <div id="dynkInfo" class="muted" style="word-break:break-all"></div>
     <div class="row"><button onclick="post('/dev/software-update',{version:'1.0.1'}).then(()=>toast('Update pushed'))">Push software update</button></div>
   </section>
 
@@ -116,6 +118,7 @@ function saveSettings() {
     tipsEnabled: $('tips').checked,
     tipPresets: $('presets').value.split(',').map(Number).filter((n) => n > 0),
     priceLockSeconds: Number($('lock').value) || 90,
+    dynkPerAud: Number($('dynkRate').value) || undefined,
   }).then(() => toast('Settings saved'));
 }
 function addItem() {
@@ -126,6 +129,7 @@ function addItem() {
   post('/dev/catalog/items', { categoryId: $('itemCat').value, name: $('itemName').value, variants }).then(() => { $('itemName').value=''; toast('Item added'); });
 }
 const act = (id, what, body) => post('/dev/payments/' + id + '/' + what, body);
+const bleTap = (id, body) => post('/dev/payments/' + id + '/ble-tap', body).then(() => toast('Phone tapped the terminal'));
 
 function render() {
   const s = state;
@@ -139,6 +143,7 @@ function render() {
   sel.innerHTML = s.tills.map((t) => '<option value="' + t.id + '">' + t.name + '</option>').join('');
   if (cur) sel.value = cur;
 
+  $('dynkInfo').textContent = 'Merchant wallet ' + s.dynk.wallet + (s.dynk.signed ? ' (sessions signed)' : ' (unsigned sessions)') + ' · mint ' + s.dynk.mint + ' · ' + s.dynk.decimals + ' decimals · chain: ' + s.dynk.chain;
   const live = s.payments.filter((p) => ['armed','wallet_connected','approved','confirming'].includes(p.status));
   $('live').innerHTML = live.length ? live.map((p) => {
     const left = Math.max(0, Math.round((Date.parse(p.expiresAt) - Date.now()) / 1000));
@@ -147,6 +152,16 @@ function render() {
       '<button onclick="act(\\'' + p.id + '\\',\\'connect\\',{wallet:\\'DYNK app\\',channel:\\'tap\\'})">DYNK tap</button>' +
       '<button onclick="act(\\'' + p.id + '\\',\\'connect\\',{wallet:\\'DYNK app\\',channel:\\'bluetooth\\'})">DYNK connect</button>' +
       '<button onclick="act(\\'' + p.id + '\\',\\'connect\\',{wallet:\\'Phantom\\',channel:\\'qr\\'})">Phantom scan</button>';
+    if (p.status === 'armed' && p.dynk) {
+      const tap = (label, body) => '<button onclick="bleTap(\\'' + p.id + '\\',' + JSON.stringify(body).replace(/"/g, '&quot;') + ')">' + label + '</button>';
+      btns += '<div class="row" style="width:100%"><span class="muted">DYNK phone, Bluetooth Tap to Pay (' + p.dynk.amount + ' DYNK):</span>' +
+        tap('Pays right amount', {}) +
+        tap('Types 10% less', { amount: (Number(p.dynk.amount) * 0.9).toFixed(2) }) +
+        tap('Types 1 DYNK more', { amount: (Number(p.dynk.amount) + 1).toFixed(2) }) +
+        tap('Sends SOL instead', { token: 'SOL', amount: '0.05' }) +
+        tap('Confirmed write lost', { dropConfirmedWrite: true }) +
+        tap('Fails in app', { fail: true }) + '</div>';
+    }
     if (p.status === 'armed' || p.status === 'wallet_connected') btns +=
       '<button class="ok" onclick="act(\\'' + p.id + '\\',\\'approve\\')">Approve</button>' +
       '<button class="bad" onclick="act(\\'' + p.id + '\\',\\'decline\\')">Decline</button>' +
@@ -160,6 +175,7 @@ function render() {
     $('tips').checked = s.settings.tipsEnabled;
     $('presets').value = s.settings.tipPresets.join(',');
     $('lock').value = s.settings.priceLockSeconds;
+    $('dynkRate').value = s.settings.dynkPerAud;
   }
   const ic = $('itemCat'); const icv = ic.value;
   ic.innerHTML = s.catalog.categories.map((c) => '<option value="' + c.id + '">' + (c.parentId ? '— ' : '') + c.name + '</option>').join('');

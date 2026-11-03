@@ -1,0 +1,6 @@
+{
+  "name": "dynkle-ble",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bluetooth LE GATT server that lets the DYNK app pay the terminal with Tap to Pay (the terminal is the receiver)."
+}

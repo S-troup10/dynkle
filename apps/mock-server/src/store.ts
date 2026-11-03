@@ -46,6 +46,9 @@ export interface StoreOptions {
   dataFile?: string;
 }
 
+/** Adds a DYNK quote to a new charge (set by the DYNK Bluetooth payment service). */
+export type Quoter = (totalCents: number, tillId: string) => PaymentSession['dynk'];
+
 interface Device {
   token: string;
   till: Till;
@@ -102,6 +105,10 @@ export class Store {
   private timers = new Set<NodeJS.Timeout>();
   private tillCount = 0;
   private saveTimer: NodeJS.Timeout | null = null;
+  /** Set by DynkPayments so every charge carries what the customer must send in DYNK. */
+  quoter: Quoter | null = null;
+  /** Shown in the profile instead of the seed's placeholder once a real receiving wallet is configured. */
+  merchantWalletAddress: string | null = null;
 
   constructor(private opts: StoreOptions = {}) {
     this.load();
@@ -218,6 +225,11 @@ export class Store {
     this.timers.add(t);
   }
 
+  /** Send an event to one till's live connection (the dev panel's pretend phone uses this). */
+  sendTo(tillId: string, event: ServerEvent) {
+    this.events.emit('event', { tillId, event });
+  }
+
   /** Events go to one till (tillId) or every paired till (null). */
   private emit(tillId: string | null, event: ServerEvent) {
     this.events.emit('event', { tillId, event });
@@ -323,7 +335,7 @@ export class Store {
   profile(device: Device): TerminalProfile {
     const { till } = device;
     return {
-      merchant,
+      merchant: this.merchantWalletAddress ? { ...merchant, walletAddress: this.merchantWalletAddress } : merchant,
       till,
       settings: this.settings,
       serial: 'DK1-' + till.id.slice(-6).toUpperCase(),
@@ -346,6 +358,11 @@ export class Store {
         this.emit(tillId, { type: 'settings.updated', profile: this.profile(d) });
       }
     }
+  }
+
+  /** Name the DYNK app shows the customer. */
+  profileMerchantName() {
+    return merchant.name;
   }
 
   verifyAdminCode(pin: string) {
@@ -500,6 +517,8 @@ export class Store {
       ndefUrl: qrUrl,
       solanaPayUrl,
     };
+    const dynk = this.quoter?.(total, tillId);
+    if (dynk) p.dynk = dynk;
     this.payments.set(p.id, p);
     if (idemKey) this.idempotency.set(idemKey, p.id);
     this.emit(tillId, { type: 'payment.status', payment: p });
@@ -526,6 +545,11 @@ export class Store {
     const p = live.at(-1);
     if (!p) throw new HttpError(404, 'No live payment');
     return p;
+  }
+
+  /** Status change from outside the store (the DYNK Bluetooth payment service). */
+  transition(p: PaymentSession, status: PaymentSession['status'], patch: Partial<PaymentSession> = {}) {
+    this.setStatus(p, status, patch);
   }
 
   private setStatus(p: PaymentSession, status: PaymentSession['status'], patch: Partial<PaymentSession> = {}) {

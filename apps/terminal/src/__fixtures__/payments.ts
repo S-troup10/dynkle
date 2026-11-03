@@ -13,7 +13,7 @@ export const profile: TerminalProfile = {
     timezone: 'Australia/Melbourne',
   },
   till: { id: 'till_1', name: 'Till 1' },
-  settings: { tipsEnabled: true, tipPresets: [10, 15, 20], currency: 'AUD', soundEnabled: true, priceLockSeconds: 90 },
+  settings: { tipsEnabled: true, tipPresets: [10, 15, 20], currency: 'AUD', soundEnabled: true, priceLockSeconds: 90, dynkPerAud: 43.218 },
   serial: 'DK1-000001',
   appVersion: '1.0.0',
   firmwareVersion: 'A14',

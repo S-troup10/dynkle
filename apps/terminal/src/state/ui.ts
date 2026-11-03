@@ -7,6 +7,9 @@ interface UiState {
   wifiName: string | null;
   updateVersion: string | null;
   adminUnlockedUntil: number;
+  /** Bluetooth Tap to Pay for the charge on screen. */
+  tapToPay: 'off' | 'starting' | 'waiting' | 'busy' | 'unavailable';
+  setTapToPay: (s: UiState['tapToPay']) => void;
   setSocket: (s: UiState['socket']) => void;
   setNet: (connected: boolean, type: string | null, wifiName: string | null) => void;
   setUpdate: (version: string | null) => void;
@@ -21,6 +24,8 @@ export const useUi = create<UiState>((set) => ({
   wifiName: null,
   updateVersion: null,
   adminUnlockedUntil: 0,
+  tapToPay: 'off',
+  setTapToPay: (tapToPay) => set({ tapToPay }),
   setSocket: (socket) => set({ socket }),
   setNet: (netConnected, netType, wifiName) => set({ netConnected, netType, wifiName }),
   setUpdate: (updateVersion) => set({ updateVersion }),

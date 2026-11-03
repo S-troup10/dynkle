@@ -27,6 +27,11 @@ jobs:
       - run: npm test
       - name: Build the mock server bundle (what the Docker image runs)
         run: npm run build:server
+      - name: Start the bundle and check it answers
+        run: |
+          (cd apps/mock-server && LOG=0 PORT=4100 node dist/index.js > ../../bundle.log 2>&1 &)
+          for i in $(seq 1 20); do curl -sf http://localhost:4100/health && exit 0; sleep 1; done
+          cat bundle.log; exit 1
 
   e2e:
     name: End-to-end (web build against the mock dashboard)

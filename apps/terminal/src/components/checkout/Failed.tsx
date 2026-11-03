@@ -35,7 +35,11 @@ export function Failed({ payment }: { payment: PaymentSession }) {
         <T v="eyebrow">Reason</T>
         <Text style={s.reasonTitle}>{payment.failureReason ?? 'The payment could not be completed.'}</Text>
         <T v="small" style={{ marginTop: 4 }}>
-          No money has moved. You can try again or the customer can pay another way.
+          {payment.failureCode === 'wrong_amount' && payment.verification?.receivedRaw && payment.verification.receivedRaw !== '0'
+            ? 'Some DYNK did arrive. Refund it to the customer, or collect the difference another way. Trying again charges the full amount.'
+            : payment.failureCode === 'not_found'
+              ? 'Check Activity before charging again, in case the payment lands late.'
+              : 'No money has moved. You can try again or the customer can pay another way.'}
         </T>
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 20, gap: 12 }}>

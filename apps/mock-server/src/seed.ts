@@ -23,6 +23,8 @@ export const defaultSettings: TerminalSettings = {
   currency: 'AUD',
   soundEnabled: true,
   priceLockSeconds: 90,
+  // A$10.00 = 432.18 DYNK, as in the integration spec's example.
+  dynkPerAud: 43.218,
 };
 
 const cat = (id: string, name: string, sort: number, parentId: string | null = null): Category => ({

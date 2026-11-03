@@ -7,6 +7,9 @@ import {
   APP_VERSION_HEADER,
   IDEMPOTENCY_HEADER,
   addCategorySchema,
+  bleEventSchema,
+  claimSignatureSchema,
+  devBleTapSchema,
   addItemSchema,
   adminVerifySchema,
   createPaymentSchema,
@@ -29,12 +32,21 @@ import {
 import { HttpError, Store, type StoreOptions } from './store';
 import { devPanelHtml } from './devPanel';
 import { merchant } from './seed';
+import { DynkPayments, type DynkOptions } from './dynk';
+import { PretendPhone } from './devPhone';
+import { MockChain } from './solana/chain';
+import { generateWallet } from './solana/wallet';
+
+/** The devnet DYNK mint the app defaults to (spec §2.4). Confirm the production mint with the DYNK team. */
+export const DEFAULT_DYNK_MINT = '8RscFZC7rooxRAaXGPomxwp5QqhrQMDRjvpx2qViEKoT';
 
 export interface ServerOptions extends StoreOptions {
   /** true for JSON logs at "info", or a level name. */
   logger?: boolean | 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
   /** How often live connections get a heartbeat (and dead ones are dropped). */
   heartbeatMs?: number;
+  /** DYNK Bluetooth Tap to Pay. Defaults: a generated merchant wallet, the mock chain, the devnet mint, 6 decimals. */
+  dynk?: Partial<DynkOptions>;
   /** Overrides the base URL used in Solana Pay links (defaults to the request host). */
   publicUrl?: string;
   /** When set, /dev and /dev/* (the dashboard + wallet simulator) need HTTP Basic auth with this password. */
@@ -76,9 +88,26 @@ export async function buildServer(opts: ServerOptions = {}) {
   await app.register(cors, { origin: true, methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'] });
   await app.register(websocket);
 
+  const mint = opts.dynk?.mint ?? DEFAULT_DYNK_MINT;
+  const decimals = opts.dynk?.decimals ?? 6;
+  const dynk = new DynkPayments(
+    store,
+    {
+      ...opts.dynk,
+      wallet: opts.dynk?.wallet ?? generateWallet(),
+      chain: opts.dynk?.chain ?? new MockChain({ [mint]: decimals }),
+      mint,
+      decimals,
+    },
+    app.log,
+  );
+  const phone = new PretendPhone(dynk, (tillId, event) => store.sendTo(tillId, event));
+
   const heartbeats = new Set<NodeJS.Timeout>();
   app.addHook('onClose', async () => {
     for (const t of heartbeats) clearInterval(t);
+    phone.dispose();
+    dynk.dispose();
     store.dispose();
   });
 
@@ -194,6 +223,27 @@ export async function buildServer(opts: ServerOptions = {}) {
   });
   app.get('/transactions', async (req) => store.transactions(device(req).till.id));
 
+  // ---------- DYNK app Tap to Pay over Bluetooth (the terminal is the receiver) ----------
+  const ownPayment = (req: FastifyRequest<{ Params: { id: string } }>) => {
+    const p = store.getPayment(req.params.id);
+    if (p.tillId !== device(req).till.id) throw new HttpError(404, 'Unknown payment');
+    return p;
+  };
+  /** A fresh signed session to serve over GATT (called when arming and on every rotation). */
+  app.post('/payments/:id/ble-session', async (req: Params<{ id: string }>) => dynk.session(ownPayment(req)));
+  /** The terminal reports the Bluetooth exchange: phone read the session, said processing/failed, or walked away. */
+  app.post('/payments/:id/ble-event', async (req: Params<{ id: string }>) => {
+    const p = ownPayment(req);
+    const body = parse(bleEventSchema, req.body);
+    req.log.info({ paymentId: p.id, event: body.event, device: body.device, message: body.message }, 'bluetooth event');
+    return dynk.bleEvent(p, body.event, body.device, body.message);
+  });
+  /** The phone wrote "confirmed" with its transaction signature. Verified on chain before anything is "Paid". */
+  app.post('/payments/:id/claim-signature', async (req: Params<{ id: string }>) => {
+    const p = ownPayment(req);
+    return dynk.claim(p, parse(claimSignatureSchema, req.body).txSignature);
+  });
+
   app.post('/remote-charges/:id/accept', async (req: Params<{ id: string }>) =>
     store.acceptRemoteCharge(req.params.id, device(req).till.id, baseUrl(req)),
   );
@@ -275,6 +325,7 @@ export async function buildServer(opts: ServerOptions = {}) {
     pairingCodes: [...store.pairingCodes.values()].filter((c) => c.status === 'waiting').map((c) => store.getPairingCode(c.code)),
     payments: [...store.payments.values()].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 15),
     catalog: store.catalog,
+    dynk: { wallet: dynk.wallet.address, signed: !!dynk.wallet.sign, mint: dynk.mint, decimals: dynk.decimals, chain: dynk.chain.name },
   }));
   app.post('/dev/pairing/claim', async (req) => {
     const body = parse(devPairingClaimSchema, req.body);
@@ -291,6 +342,10 @@ export async function buildServer(opts: ServerOptions = {}) {
     store.decline(req.params.id, parse(devDeclineSchema, req.body).reason),
   );
   app.post('/dev/payments/:id/expire', async (req: Params<{ id: string }>) => store.expire(req.params.id));
+  /** A pretend DYNK phone taps the terminal (Bluetooth Tap to Pay) and pays on the mock chain. */
+  app.post('/dev/payments/:id/ble-tap', async (req: Params<{ id: string }>) =>
+    phone.tap(store.resolvePayment(req.params.id), parse(devBleTapSchema, req.body)),
+  );
   app.post('/dev/remote-charge', async (req) => store.sendRemoteCharge(parse(remoteChargeSchema, req.body)));
   app.post('/dev/tills/:id/unpair', async (req: Params<{ id: string }>) => {
     store.unpair(req.params.id);

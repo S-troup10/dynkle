@@ -118,6 +118,49 @@ await id('paid-title').waitFor({ timeout: 10_000 });
 step('charge restored after a reload, then paid');
 await id('new-sale').click();
 
+// ---------- DYNK app Tap to Pay over Bluetooth (pretend phone in the dev panel) ----------
+// The terminal starts serving its Bluetooth session just after arming, so retry the tap until it's there.
+const bleTap = async (body = {}) => {
+  for (let i = 0; ; i++) {
+    try {
+      return await dev('/dev/payments/latest/ble-tap', body);
+    } catch (e) {
+      if (i > 40 || !String(e).includes('serving')) throw e;
+      await page.waitForTimeout(150);
+    }
+  }
+};
+const armBle = async (digits) => {
+  await id('keypad-charge').waitFor();
+  await keys(digits);
+  await id('keypad-charge').click();
+  await id('no-tip').click();
+  await id('dynk-amount').waitFor();
+};
+await armBle('1000');
+if ((await id('dynk-amount').innerText()) !== '432.18 DYNK') throw new Error('DYNK quote wrong: ' + (await id('dynk-amount').innerText()));
+await shot('ble-armed');
+await bleTap();
+await id('paid-title').waitFor({ timeout: 10_000 });
+if (!(await id('paid-dynk').innerText()).includes('432.18 DYNK')) throw new Error('paid DYNK amount missing');
+await shot('ble-paid');
+await id('new-sale').click();
+step('DYNK Bluetooth Tap to Pay: paid, verified on chain');
+
+await armBle('1000');
+await bleTap({ amount: '400' });
+await id('try-again').waitFor({ timeout: 10_000 });
+await text('Received 400 DYNK of 432.18 DYNK: 32.18 DYNK short.').waitFor();
+await shot('ble-short');
+await id('cancel-sale').click();
+step('DYNK Bluetooth: underpayment shows the shortfall');
+
+await armBle('1000');
+await bleTap({ dropConfirmedWrite: true });
+await id('paid-title').waitFor({ timeout: 15_000 });
+await id('new-sale').click();
+step("DYNK Bluetooth: lost 'confirmed' write, found by the chain watcher");
+
 // ---------- Items -> order ----------
 await id('tab-items').click();
 await id('category-Coffee').waitFor();

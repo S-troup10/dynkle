@@ -6,7 +6,8 @@ import { Icon } from '@/components/Icon';
 import { Banner, MethodChips, PriceLock, QRCard } from '@/components/Payment';
 import { Button, Screen, T } from '@/components/ui';
 import { useCountdown } from '@/hooks/useCountdown';
-import { bluetooth, nfc } from '@/native/hardware';
+import { nfc } from '@/native/hardware';
+import { useUi } from '@/state/ui';
 import { useCheckout } from '@/state/checkout';
 import { useSession } from '@/state/session';
 import { colors } from '@/theme';
@@ -19,7 +20,7 @@ export function Armed({ payment }: { payment: PaymentSession }) {
   const lockSeconds = useSession((s) => s.profile?.settings.priceLockSeconds) ?? 90;
   const left = useCountdown(payment.expiresAt);
   const [tapState, setTapState] = useState(nfc.state());
-  const btState = bluetooth.state();
+  const tapToPay = useUi((u) => u.tapToPay);
 
   useEffect(() => {
     const t = setInterval(() => setTapState(nfc.state()), 2000);
@@ -56,9 +57,26 @@ export function Armed({ payment }: { payment: PaymentSession }) {
           </Text>
           {payment.tipCents > 0 ? <T>Includes {formatMoney(payment.tipCents)} tip</T> : null}
         </View>
-        <QRCard value={payment.qrUrl} size={190} />
-        <T style={s.caption}>Tap your phone on the terminal, connect with DYNK, or scan with any Solana wallet.</T>
-        <MethodChips tap={tapOk ? 'ready' : 'unavailable'} connect={btState === 'ready' ? 'ready' : 'unavailable'} scan="ready" />
+        {payment.dynk ? (
+          // Today the DYNK app asks the customer for the amount, so show exactly what to enter.
+          <View style={s.dynkBox} accessible accessibilityLabel={`DYNK app: Tap to Pay, enter ${payment.dynk.amount} DYNK`}>
+            <Text style={s.dynkLabel}>DYNK app · Tap to Pay · enter</Text>
+            <Text style={s.dynkAmount} testID="dynk-amount" adjustsFontSizeToFit numberOfLines={1}>
+              {payment.dynk.amount} DYNK
+            </Text>
+          </View>
+        ) : null}
+        <QRCard value={payment.qrUrl} size={payment.dynk ? 150 : 190} />
+        <T style={s.caption}>
+          {payment.dynk
+            ? 'Hold your phone to the terminal with DYNK Tap to Pay, or scan with any Solana wallet.'
+            : 'Tap your phone on the terminal, connect with DYNK, or scan with any Solana wallet.'}
+        </T>
+        <MethodChips
+          tap={tapOk ? 'ready' : 'unavailable'}
+          connect={tapToPay === 'waiting' || tapToPay === 'busy' || tapToPay === 'starting' ? 'ready' : 'unavailable'}
+          scan="ready"
+        />
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 20, gap: 14 }}>
         <PriceLock secondsLeft={left} totalSeconds={lockSeconds} />

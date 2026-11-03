@@ -36,3 +36,22 @@ export function keypadPress(cents: number, key: string): number {
   else return cents;
   return next > MAX_KEYPAD_CENTS ? cents : next;
 }
+
+/** Integer token units -> decimal string without trailing zeros, e.g. ("432180000", 6) -> "432.18". */
+export function formatTokenAmount(raw: string | bigint, decimals: number): string {
+  const v = BigInt(raw);
+  const neg = v < 0n;
+  const abs = neg ? -v : v;
+  const base = 10n ** BigInt(decimals);
+  const whole = abs / base;
+  const frac = (abs % base).toString().padStart(decimals, '0').replace(/0+$/, '');
+  return `${neg ? '-' : ''}${whole}${frac ? `.${frac}` : ''}`;
+}
+
+/** Decimal string -> integer token units. Returns null for anything that isn't a plain non-negative decimal. */
+export function parseTokenAmount(text: string, decimals: number): bigint | null {
+  const m = /^(\d+)(?:\.(\d+))?$/.exec(text.trim());
+  if (!m) return null;
+  const frac = (m[2] ?? '').slice(0, decimals).padEnd(decimals, '0');
+  return BigInt(m[1]) * 10n ** BigInt(decimals) + BigInt(frac || '0');
+}

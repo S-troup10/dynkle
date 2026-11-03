@@ -2,6 +2,8 @@ import {
   APP_VERSION_HEADER,
   IDEMPOTENCY_HEADER,
   type AddItemRequest,
+  type BleSenderMessage,
+  type BleSessionV2,
   type Catalog,
   type Category,
   type CreatePaymentRequest,
@@ -135,5 +137,13 @@ export const api = {
   transactions: () => request<TransactionsResponse>('GET', '/transactions'),
   // Accept and dismiss are safe to retry: the dashboard answers a repeat with the same result.
   acceptRemoteCharge: (id: string) => request<PaymentSession>('POST', `/remote-charges/${id}/accept`, { retry: true }),
+  /** A fresh signed Tap to Pay session to serve over Bluetooth (on arming and every rotation). */
+  bleSession: (paymentId: string) =>
+    request<{ session: BleSessionV2; wire: string; minRemainingMs: number }>('POST', `/payments/${paymentId}/ble-session`),
+  bleEvent: (paymentId: string, event: 'read' | 'processing' | 'failed' | 'disconnected', device?: string, message?: BleSenderMessage) =>
+    request<PaymentSession>('POST', `/payments/${paymentId}/ble-event`, { body: { event, device, message }, retry: true }),
+  /** The phone wrote "confirmed": hand its signature to the dashboard, which checks the chain. Safe to repeat. */
+  claimSignature: (paymentId: string, txSignature: string, device?: string) =>
+    request<PaymentSession>('POST', `/payments/${paymentId}/claim-signature`, { body: { txSignature, device }, retry: true }),
   dismissRemoteCharge: (id: string) => request<{ ok: boolean }>('POST', `/remote-charges/${id}/dismiss`, { retry: true }),
 };

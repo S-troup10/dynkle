@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { formatMoney, type PaymentSession } from '@dynkle/shared';
+import { formatMoney, formatTokenAmount, type PaymentSession } from '@dynkle/shared';
 import { MerchantHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
 import { Button, Halo, Screen } from '@/components/ui';
 import { useCountdown } from '@/hooks/useCountdown';
 import { methodLabel } from '@/lib/format';
 import { playSound } from '@/lib/sound';
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 import { endSale } from './actions';
 import { s } from './styles';
 
@@ -47,6 +47,17 @@ export function Paid({ payment }: { payment: PaymentSession }) {
         </Text>
         <Text style={s.paidAmount}>{formatMoney(payment.totalCents)}</Text>
         <Text style={s.paidSub}>{methodLabel(payment.method)} · confirmed on Solana</Text>
+        {payment.dynk && payment.verification?.receivedRaw ? (
+          <Text style={s.paidSub} testID="paid-dynk">
+            {formatTokenAmount(payment.verification.receivedRaw, payment.dynk.decimals)} DYNK received
+          </Text>
+        ) : null}
+        {payment.dynk && payment.verification?.excessRaw ? (
+          // Customers type the amount today: an overpayment is accepted but flagged for a refund.
+          <Text style={[s.paidSub, { fontFamily: fonts.bodySemi }]} testID="paid-excess">
+            Overpaid by {formatTokenAmount(payment.verification.excessRaw, payment.dynk.decimals)} DYNK — refund the difference
+          </Text>
+        ) : null}
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 16, gap: 12 }}>
         <Button
