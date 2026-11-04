@@ -5,7 +5,7 @@ import { FadeInUp, usePressScale } from '@/components/ui/motion';
 import { haptics } from '@/lib/haptics';
 import { useCart } from '@/state/cart';
 import { cartCount, cartTotal } from '@/state/cartLogic';
-import { colors, fonts, radius, shadows } from '@/theme';
+import { colors, cs, fonts, radius, shadows } from '@/theme';
 import { Icon } from './Icon';
 
 export function CategoryGrid({ catalog, categories }: { catalog: Catalog; categories: Category[] }) {
@@ -77,29 +77,29 @@ export function OrderBar() {
 }
 
 const s = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: cs(12, 8) },
   tile: {
     backgroundColor: colors.white,
     borderRadius: radius.card,
-    padding: 16,
-    minHeight: 116,
+    padding: cs(16, 12),
+    minHeight: cs(116, 90),
     ...shadows.card,
   },
   letter: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: cs(40, 32),
+    height: cs(40, 32),
+    borderRadius: cs(20, 16),
     backgroundColor: colors.orangeTint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: cs(10, 6),
   },
-  letterText: { fontFamily: fonts.display, fontSize: 16, color: colors.orange },
-  tileName: { fontFamily: fonts.bodyMedium, fontSize: 18, color: colors.ink },
-  tileSub: { fontFamily: fonts.body, fontSize: 13, color: colors.muted, marginTop: 2 },
-  barWrap: { position: 'absolute', left: 20, right: 20, bottom: 16 },
+  letterText: { fontFamily: fonts.display, fontSize: cs(16, 14), color: colors.orange },
+  tileName: { fontFamily: fonts.bodyMedium, fontSize: cs(18, 15), color: colors.ink },
+  tileSub: { fontFamily: fonts.body, fontSize: cs(13, 12), color: colors.muted, marginTop: 2 },
+  barWrap: { position: 'absolute', left: 20, right: 20, bottom: cs(16, 10) },
   bar: {
-    height: 60,
+    height: cs(60, 50),
     borderRadius: radius.pill,
     backgroundColor: colors.ink,
     flexDirection: 'row',
@@ -109,15 +109,15 @@ const s = StyleSheet.create({
     paddingRight: 8,
     ...shadows.raised,
   },
-  barText: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.white },
+  barText: { fontFamily: fonts.bodySemi, fontSize: cs(16, 14), color: colors.white },
   barBtn: {
-    height: 44,
+    height: cs(44, 38),
     borderRadius: radius.pill,
     backgroundColor: colors.orange,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: cs(18, 14),
   },
-  barBtnText: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.white },
+  barBtnText: { fontFamily: fonts.bodySemi, fontSize: cs(16, 14), color: colors.white },
 });

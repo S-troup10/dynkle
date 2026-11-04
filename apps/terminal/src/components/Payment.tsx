@@ -2,7 +2,6 @@ import { type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { colors, fonts, radius, shadows } from '@/theme';
-import { formatCountdown } from '@/lib/format';
 import type { StepState } from '@/state/checkoutLogic';
 import { Icon, type IconName } from './Icon';
 import { Spinner } from './Spinner';
@@ -19,56 +18,6 @@ export function QRCard({ value, size = 200 }: { value: string; size?: number }) 
       <QRCode value={value} size={size} color={colors.ink} backgroundColor={colors.white} ecl="H" />
       <View style={s.qrLogo}>
         <Icon name="tap" size={20} color={colors.white} strokeWidth={2.4} />
-      </View>
-    </View>
-  );
-}
-
-export type ChannelState = 'ready' | 'unavailable';
-
-export function MethodChips({ tap, connect, scan }: { tap: ChannelState; connect: ChannelState; scan: ChannelState }) {
-  const chips: { label: string; icon: IconName; state: ChannelState }[] = [
-    { label: 'Tap', icon: tap === 'ready' ? 'tap' : 'tapOff', state: tap },
-    { label: 'Connect', icon: 'bluetooth', state: connect },
-    { label: 'Scan', icon: 'scan', state: scan },
-  ];
-  return (
-    <View style={s.chips}>
-      {chips.map((c) => {
-        const ok = c.state === 'ready';
-        return (
-          <View
-            key={c.label}
-            style={[s.chip, !ok && s.chipOff]}
-            testID={`chip-${c.label.toLowerCase()}`}
-            accessible
-            accessibilityLabel={`${c.label}: ${ok ? 'ready' : 'unavailable'}`}
-          >
-            <Icon name={c.icon} size={22} color={ok ? colors.orange : colors.muted} />
-            <Text style={s.chipLabel}>{c.label}</Text>
-            <View style={s.chipStatus}>
-              {ok ? <View style={s.greenDot} /> : null}
-              <Text style={[s.chipStatusText, { color: ok ? colors.greenDeep : colors.red }]}>{ok ? 'Ready' : 'Unavailable'}</Text>
-            </View>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-export function PriceLock({ secondsLeft, totalSeconds }: { secondsLeft: number; totalSeconds: number }) {
-  const pct = totalSeconds > 0 ? Math.max(0, Math.min(1, secondsLeft / totalSeconds)) : 0;
-  return (
-    <View style={{ gap: 8 }}>
-      <View style={s.lockRow} accessible accessibilityLabel={`Price locked for ${Math.ceil(secondsLeft)} more seconds`}>
-        <Text style={s.lockLabel}>Price locked</Text>
-        <Text style={s.lockTime} testID="price-lock">
-          {formatCountdown(secondsLeft)}
-        </Text>
-      </View>
-      <View style={s.track}>
-        <View style={[s.bar, { width: `${pct * 100}%` }]} />
       </View>
     </View>
   );
@@ -154,24 +103,6 @@ const s = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.white,
   },
-  chips: { flexDirection: 'row', gap: 10 },
-  chip: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    paddingVertical: 14,
-    alignItems: 'center',
-    gap: 4,
-    ...shadows.card,
-  },
-  chipOff: { backgroundColor: colors.bg, shadowOpacity: 0, elevation: 0 },
-  chipLabel: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.ink },
-  chipStatus: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  greenDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green },
-  chipStatusText: { fontFamily: fonts.bodySemi, fontSize: 12 },
-  lockRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  lockLabel: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
-  lockTime: { fontFamily: fonts.display, fontSize: 14, color: colors.ink },
   track: { height: 6, borderRadius: 3, backgroundColor: colors.fill, overflow: 'hidden' },
   bar: { height: 6, borderRadius: 3, backgroundColor: colors.orange },
   steps: { backgroundColor: colors.white, borderRadius: radius.card, ...shadows.card, overflow: 'hidden' },

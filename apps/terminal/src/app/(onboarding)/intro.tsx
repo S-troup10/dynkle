@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon, type IconName } from '@/components/Icon';
 import { Button, Headline, Screen, T } from '@/components/ui';
-import { colors, fonts, gradients, shadows } from '@/theme';
+import { colors, compact, cs, fonts, gradients, shadows } from '@/theme';
 
 const STEPS = [
   {
@@ -56,7 +56,7 @@ export default function Intro() {
               <View key={i} style={{ width, paddingHorizontal: 24 }}>
                 <View style={s.art}>{st.art}</View>
                 <Text style={s.eyebrow}>{`STEP 0${i + 1} / 03`}</Text>
-                <Headline accent={st.accent} size={30}>
+                <Headline accent={st.accent} size={cs(30, 22)}>
                   {st.title}
                 </Headline>
                 <T style={s.body}>{st.body}</T>
@@ -79,7 +79,7 @@ export default function Intro() {
 
 function TerminalArt() {
   return (
-    <View style={[a.device, { width: 250 }]}>
+    <View style={[a.device, { width: cs(250, 170) }]}>
       <View style={a.screen}>
         <View style={a.rowBetween}>
           <Text style={a.biz}>Dynkle Café</Text>
@@ -110,11 +110,11 @@ function MethodsArt() {
     ['bluetooth', 'CONNECT'],
   ];
   return (
-    <View style={{ flexDirection: 'row', gap: 24 }}>
+    <View style={{ flexDirection: 'row', gap: cs(24, 14) }}>
       {items.map(([icon, label]) => (
-        <View key={label} style={{ alignItems: 'center', gap: 14 }}>
+        <View key={label} style={{ alignItems: 'center', gap: cs(14, 8) }}>
           <View style={a.methodCircle}>
-            <Icon name={icon} size={28} color={colors.orange} />
+            <Icon name={icon} size={cs(28, 20)} color={colors.orange} />
           </View>
           <Text style={a.methodLabel}>{label}</Text>
         </View>
@@ -125,7 +125,7 @@ function MethodsArt() {
 
 function PaidArt() {
   return (
-    <View style={[a.device, { width: 270, padding: 8 }]}>
+    <View style={[a.device, { width: cs(270, 180), padding: cs(8, 6) }]}>
       <LinearGradient colors={gradients.orange} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={a.paidCard}>
         <View style={a.paidCheck}>
           <Icon name="check" size={24} color={colors.orange} strokeWidth={2.6} />
@@ -138,39 +138,55 @@ function PaidArt() {
 }
 
 const s = StyleSheet.create({
-  top: { height: 56, alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 24 },
+  // The status bar is hidden in kiosk mode, so the safe-area inset here is often
+  // 0 — pad explicitly instead of relying on it to keep Skip off the top edge.
+  top: { height: cs(56, 48), alignItems: 'flex-end', justifyContent: 'center', paddingHorizontal: 24, paddingTop: 10 },
   skip: { fontFamily: fonts.bodyMedium, fontSize: 16, color: colors.ink },
-  art: { height: 340, alignItems: 'center', justifyContent: 'center' },
-  eyebrow: { fontFamily: fonts.bodyMedium, fontSize: 12, letterSpacing: 2, color: colors.muted, marginBottom: 12 },
-  body: { fontSize: 16, lineHeight: 25, marginTop: 14 },
-  footer: { paddingHorizontal: 24, paddingBottom: 24 },
+  art: { height: cs(340, 180), alignItems: 'center', justifyContent: 'center' },
+  eyebrow: { fontFamily: fonts.bodyMedium, fontSize: 12, letterSpacing: 2, color: colors.muted, marginBottom: cs(12, 6) },
+  body: { fontSize: cs(16, 14), lineHeight: cs(25, 20), marginTop: cs(14, 8) },
+  footer: { paddingHorizontal: 24, paddingBottom: compact ? 12 : 24 },
 });
 
 const a = StyleSheet.create({
-  device: { borderRadius: 28, borderWidth: 8, borderColor: colors.ink, backgroundColor: colors.white, ...shadows.raised },
-  screen: { padding: 16, gap: 10 },
+  device: { borderRadius: 28, borderWidth: compact ? 6 : 8, borderColor: colors.ink, backgroundColor: colors.white, ...shadows.raised },
+  screen: { padding: cs(16, 10), gap: cs(10, 6) },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  biz: { fontFamily: fonts.display, fontSize: 11, color: colors.ink },
+  biz: { fontFamily: fonts.display, fontSize: cs(11, 9), color: colors.ink },
   miniPill: { backgroundColor: colors.fill, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   miniPillText: { fontFamily: fonts.body, fontSize: 9, color: colors.ink },
-  amount: { fontFamily: fonts.displayHeavy, fontSize: 30, color: colors.ink },
-  keys: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  amount: { fontFamily: fonts.displayHeavy, fontSize: cs(30, 20), color: colors.ink },
+  keys: { flexDirection: 'row', flexWrap: 'wrap', gap: cs(6, 4) },
   key: {
     width: '31%',
     flexGrow: 1,
-    height: 34,
+    height: cs(34, 22),
     borderRadius: 8,
     backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keyText: { fontFamily: fonts.display, fontSize: 13, color: colors.ink },
-  charge: { height: 38, borderRadius: 999, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' },
-  chargeText: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.white },
-  methodCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  methodLabel: { fontFamily: fonts.bodySemi, fontSize: 13, letterSpacing: 1.5, color: colors.ink },
-  paidCard: { borderRadius: 20, height: 190, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  paidCheck: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  paidText: { fontFamily: fonts.displayHeavy, fontSize: 30, color: colors.white },
-  paidSub: { fontFamily: fonts.body, fontSize: 12, color: colors.white },
+  keyText: { fontFamily: fonts.display, fontSize: cs(13, 11), color: colors.ink },
+  charge: { height: cs(38, 26), borderRadius: 999, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' },
+  chargeText: { fontFamily: fonts.bodySemi, fontSize: cs(13, 11), color: colors.white },
+  methodCircle: {
+    width: cs(64, 44),
+    height: cs(64, 44),
+    borderRadius: cs(32, 22),
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  methodLabel: { fontFamily: fonts.bodySemi, fontSize: cs(13, 11), letterSpacing: 1.5, color: colors.ink },
+  paidCard: { borderRadius: 20, height: cs(190, 110), alignItems: 'center', justifyContent: 'center', gap: cs(6, 3) },
+  paidCheck: {
+    width: cs(48, 34),
+    height: cs(48, 34),
+    borderRadius: cs(24, 17),
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paidText: { fontFamily: fonts.displayHeavy, fontSize: cs(30, 20), color: colors.white },
+  paidSub: { fontFamily: fonts.body, fontSize: cs(12, 10), color: colors.white },
 });

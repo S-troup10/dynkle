@@ -33,6 +33,7 @@ interface WifiModule {
   openPanel(): void;
   forgetAll(): Promise<void>;
   bluetoothState(): RadioState;
+  hasSim(): boolean;
 }
 
 export type BleTxPower = 'ultraLow' | 'low' | 'medium' | 'high';
@@ -112,6 +113,8 @@ export const wifi = {
   },
   connect: async (ssid: string, password: string | null) => (wifiNative ? wifiNative.connect(ssid, password) : true),
   currentSsid: () => (wifiNative ? wifiNative.currentSsid() : 'Shop WiFi'),
+  /** Whether this device has a usable SIM for mobile data (false on web/dev preview). */
+  hasSim: () => (wifiNative ? wifiNative.hasSim() : false),
   openPanel: () => {
     if (wifiNative) wifiNative.openPanel();
     else if (Platform.OS === 'android') Linking.sendIntent('android.settings.WIFI_SETTINGS').catch(() => undefined);

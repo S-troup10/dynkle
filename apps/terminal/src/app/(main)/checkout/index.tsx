@@ -1,16 +1,20 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { Armed, Confirming, Expired, Failed, Paid, Processing, backToSelling } from '@/components/checkout';
-import { FadeInUp, Screen } from '@/components/ui';
-import { startTapToPay } from '@/lib/tapToPay';
+import { Spinner } from '@/components/Spinner';
+import { FadeInUp, Halo, Pulse, Screen, T } from '@/components/ui';
+import { startBleReceive } from '@/lib/bleReceive';
 import { nfc } from '@/native/hardware';
 import { usePrefs } from '@/state/prefs';
 import { useCheckout } from '@/state/checkout';
 import { checkoutView, isLive } from '@/state/checkoutLogic';
+import { useSession } from '@/state/session';
 import { useUi } from '@/state/ui';
+import { colors } from '@/theme';
 
 export default function Checkout() {
   const payment = useCheckout((s) => s.payment);
+  const busy = useCheckout((s) => s.busy);
   const socket = useUi((s) => s.socket);
 
   // Fallback polling when the live connection is down.
@@ -29,11 +33,12 @@ export default function Checkout() {
 
   // DYNK app Tap to Pay over Bluetooth: runs from arming until the charge is over. It keeps going after
   // the phone says "processing" (advertising stops) so the phone's "confirmed" write still arrives.
-  const tapToPayCharge = payment?.dynk && isLive(payment.status) ? payment.id : null;
+  const bleCharge = payment && isLive(payment.status) ? payment.id : null;
   useEffect(() => {
-    if (!tapToPayCharge) return;
-    return startTapToPay(tapToPayCharge, { txPower: usePrefs.getState().bleTxPower });
-  }, [tapToPayCharge]);
+    if (!bleCharge) return;
+    const displayName = useSession.getState().profile?.merchant.name ?? 'Dynkle';
+    return startBleReceive(bleCharge, displayName, { txPower: usePrefs.getState().bleTxPower });
+  }, [bleCharge]);
 
   useEffect(() => {
     if (payment?.status === 'cancelled') backToSelling();
@@ -41,8 +46,22 @@ export default function Checkout() {
 
   if (!payment)
     return (
-      <Screen>
-        <View />
+      <Screen glow="center">
+        {/* Navigating here happens the instant the merchant taps a tip, before the
+            charge has actually been created on the backend — show that it's working
+            rather than sitting on a blank screen for the round trip. */}
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+          {busy ? (
+            <>
+              <Pulse>
+                <Halo color={colors.orangeGlow} size={140}>
+                  <Spinner size={72} stroke={5} />
+                </Halo>
+              </Pulse>
+              <T v="eyebrow">Arming charge…</T>
+            </>
+          ) : null}
+        </View>
       </Screen>
     );
 

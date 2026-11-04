@@ -22,13 +22,12 @@ afterEach(() => {
 });
 
 describe('checkout screen', () => {
-  it('shows the armed charge with its QR code and price lock', async () => {
+  it('shows the armed charge with its QR code', async () => {
     show(payment());
     await render(<Checkout />);
     expect(screen.getByTestId('armed-amount')).toHaveTextContent('$24.15');
     expect(screen.getByText('Includes $3.15 tip')).toBeTruthy();
     expect(screen.getByLabelText(/Payment QR code/)).toBeTruthy();
-    expect(screen.getByLabelText(/Price locked for \d+ more seconds/)).toBeTruthy();
   });
 
   it('moves through confirming and processing as the status changes', async () => {

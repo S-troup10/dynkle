@@ -11,8 +11,8 @@ import { Animated, Easing, type GestureResponderEvent, type StyleProp, type View
 export function FadeInUp({
   children,
   delay = 0,
-  distance = 14,
-  duration = 320,
+  distance = 8,
+  duration = 180,
   style,
   replayKey,
 }: {
@@ -47,7 +47,7 @@ export function FadeInUp({
 export function PopIn({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: StyleProp<ViewStyle> }) {
   const [progress] = useState(() => new Animated.Value(0));
   useEffect(() => {
-    const anim = Animated.spring(progress, { toValue: 1, delay, friction: 6, tension: 140, useNativeDriver: true });
+    const anim = Animated.spring(progress, { toValue: 1, delay, friction: 9, tension: 220, useNativeDriver: true });
     anim.start();
     return () => anim.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,8 +61,8 @@ export function Pulse({ children, style }: { children: ReactNode; style?: StyleP
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(progress, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(progress, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(progress, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(progress, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ]),
     );
     loop.start();
@@ -90,7 +90,7 @@ export function Pulse({ children, style }: { children: ReactNode; style?: StyleP
  */
 export function usePressScale(scale = 0.96) {
   const [value] = useState(() => new Animated.Value(1));
-  const animateTo = (toValue: number) => Animated.spring(value, { toValue, friction: 9, tension: 220, useNativeDriver: true }).start();
+  const animateTo = (toValue: number) => Animated.spring(value, { toValue, friction: 11, tension: 320, useNativeDriver: true }).start();
   const handlers = {
     onPressIn: (_e: GestureResponderEvent) => animateTo(scale),
     onPressOut: (_e: GestureResponderEvent) => animateTo(1),

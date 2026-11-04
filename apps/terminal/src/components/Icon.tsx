@@ -4,7 +4,7 @@ import { colors } from '@/theme';
 /** Line icons lifted from the Dynkle terminal design (24×24, round caps). */
 const ICONS = {
   arrowRight: <Path d="M5 12h14M13 6l6 6-6 6" />,
-  back: <Path d="M15 5l-7 7 7 7" />,
+  back: <Path d="M19 12H5M11 6l-6 6 6 6" />,
   chevron: <Path d="M9 5l7 7-7 7" />,
   check: <Path d="M5 12.5l4.5 4.5L19 7.5" />,
   close: <Path d="M6 6l12 12M18 6L6 18" />,
@@ -68,17 +68,15 @@ const ICONS = {
   ),
   backspace: (
     <>
-      <Path d="M21 5H9l-6 7 6 7h12z" />
-      <Path d="M12 9l6 6M18 9l-6 6" />
+      <Path d="M20 6H9a1 1 0 0 0-.74.33L3 12l5.26 5.67A1 1 0 0 0 9 18h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z" />
+      <Path d="M11.5 9.5l5 5M16.5 9.5l-5 5" />
     </>
   ),
   keypad: <>{[5, 11, 17].flatMap((cy) => [6, 12, 18].map((cx) => <Circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.3" />))}</>,
   items: (
     <>
-      <Rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <Rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <Rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <Rect x="14" y="14" width="7" height="7" rx="1.5" />
+      <Path d="M6 8h12l-1.2 11.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 8z" />
+      <Path d="M9 8V6a3 3 0 0 1 6 0v2" />
     </>
   ),
   activity: (

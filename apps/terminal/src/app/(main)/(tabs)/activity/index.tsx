@@ -5,6 +5,7 @@ import { formatMoney, type PaymentSession } from '@dynkle/shared';
 import { api } from '@/api/client';
 import { MerchantHeader } from '@/components/Header';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { SwipeTabs } from '@/components/SwipeTabs';
 import { Glow, Pill, Screen, T } from '@/components/ui';
 import { formatTime, paymentSubtitle, paymentTitle } from '@/lib/format';
 import { useSession } from '@/state/session';
@@ -16,37 +17,39 @@ export default function Activity() {
   const d = q.data;
 
   return (
-    <Screen edges={['top']}>
-      <MerchantHeader right="settings" />
-      <OfflineBanner />
-      <ScrollView
-        contentContainerStyle={s.content}
-        refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => q.refetch()} tintColor={colors.orange} />}
-      >
-        <View style={s.summary}>
-          <View style={[StyleSheet.absoluteFill, { left: '40%', top: -40 }]}>
-            <Glow position="top" color="rgba(255,128,0,0.35)" />
+    <SwipeTabs current="activity">
+      <Screen edges={['top']}>
+        <MerchantHeader right="settings" />
+        <OfflineBanner />
+        <ScrollView
+          contentContainerStyle={s.content}
+          refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => q.refetch()} tintColor={colors.orange} />}
+        >
+          <View style={s.summary}>
+            <View style={[StyleSheet.absoluteFill, { left: '40%', top: -40 }]}>
+              <Glow position="top" color="rgba(255,128,0,0.35)" />
+            </View>
+            <Text style={s.summaryEyebrow}>TODAY · {till?.toUpperCase()}</Text>
+            <Text style={s.summaryAmount} testID="today-total">
+              {formatMoney(d?.totalPaidCents ?? 0)}
+            </Text>
+            <Text style={s.summarySub}>{d ? `${d.paidCount} paid · ${d.failedCount} failed · ${d.expiredCount} expired` : ' '}</Text>
           </View>
-          <Text style={s.summaryEyebrow}>TODAY · {till?.toUpperCase()}</Text>
-          <Text style={s.summaryAmount} testID="today-total">
-            {formatMoney(d?.totalPaidCents ?? 0)}
-          </Text>
-          <Text style={s.summarySub}>{d ? `${d.paidCount} paid · ${d.failedCount} failed · ${d.expiredCount} expired` : ' '}</Text>
-        </View>
 
-        {q.isLoading ? (
-          <ActivityIndicator color={colors.orange} style={{ marginTop: 30 }} />
-        ) : d && d.transactions.length > 0 ? (
-          <View style={s.list}>
-            {d.transactions.map((p, i) => (
-              <TxRow key={p.id} p={p} first={i === 0} />
-            ))}
-          </View>
-        ) : (
-          <T style={{ textAlign: 'center', marginTop: 30 }}>No payments yet today.</T>
-        )}
-      </ScrollView>
-    </Screen>
+          {q.isLoading ? (
+            <ActivityIndicator color={colors.orange} style={{ marginTop: 30 }} />
+          ) : d && d.transactions.length > 0 ? (
+            <View style={s.list}>
+              {d.transactions.map((p, i) => (
+                <TxRow key={p.id} p={p} first={i === 0} />
+              ))}
+            </View>
+          ) : (
+            <T style={{ textAlign: 'center', marginTop: 30 }}>No payments yet today.</T>
+          )}
+        </ScrollView>
+      </Screen>
+    </SwipeTabs>
   );
 }
 

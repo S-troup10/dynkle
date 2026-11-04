@@ -4,12 +4,14 @@ import android.app.admin.DevicePolicyManager
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.wifi.ScanResult
 import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.net.wifi.WifiNetworkSuggestion
 import android.os.Build
 import android.provider.Settings
+import android.telephony.TelephonyManager
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
@@ -69,7 +71,7 @@ class DynkleWifiModule : Module() {
     }
 
     AsyncFunction("connect") { ssid: String, password: String? ->
-      if (isOwner()) {
+      val submitted = if (isOwner()) {
         // Device owners may still configure networks directly on every Android version.
         @Suppress("DEPRECATION")
         val config = WifiConfiguration().apply {
@@ -83,15 +85,33 @@ class DynkleWifiModule : Module() {
         @Suppress("DEPRECATION")
         val id = wifi.addNetwork(config)
         @Suppress("DEPRECATION")
-        return@AsyncFunction id != -1 && wifi.enableNetwork(id, true)
+        id != -1 && wifi.enableNetwork(id, true)
+      } else {
+        val suggestion = WifiNetworkSuggestion.Builder().setSsid(ssid).apply {
+          if (!password.isNullOrEmpty()) setWpa2Passphrase(password)
+        }.build()
+        wifi.addNetworkSuggestions(listOf(suggestion)) == WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS
       }
-      val suggestion = WifiNetworkSuggestion.Builder().setSsid(ssid).apply {
-        if (!password.isNullOrEmpty()) setWpa2Passphrase(password)
-      }.build()
-      wifi.addNetworkSuggestions(listOf(suggestion)) == WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS
+      if (!submitted) return@AsyncFunction false
+      // Accepting the config only means the OS will try it — wait for an actual
+      // association before telling the caller it's connected, rather than hoping.
+      // AsyncFunction already runs this off the main thread, so a blocking sleep is fine here.
+      var waited = 0
+      while (waited < 15_000) {
+        if (currentSsid() == ssid) return@AsyncFunction true
+        Thread.sleep(500)
+        waited += 500
+      }
+      false
     }
 
     Function("currentSsid") { currentSsid() }
+
+    Function("hasSim") {
+      if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return@Function false
+      val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+      tm.simState == TelephonyManager.SIM_STATE_READY
+    }
 
     Function("openPanel") {
       val action = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) Settings.Panel.ACTION_WIFI else Settings.ACTION_WIFI_SETTINGS

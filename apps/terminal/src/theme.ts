@@ -1,4 +1,17 @@
-import { Platform, type ViewStyle } from 'react-native';
+import { Dimensions, Platform, type ViewStyle } from 'react-native';
+
+/**
+ * The FP9840's 5" screen is much shorter than the phone sizes these layouts were
+ * designed against (593dp usable height vs. 650-700+dp on a typical phone), so
+ * fixed heights/gaps that fit on a phone overflow here. `compact` flags that;
+ * `cs()` (compact size) picks a smaller value for it instead of scaling every
+ * number by a ratio, since text and touch targets shouldn't just shrink linearly.
+ */
+export const compact = Dimensions.get('window').height < 700;
+
+export function cs(normal: number, compactValue: number): number {
+  return compact ? compactValue : normal;
+}
 
 export const colors = {
   ink: '#212320',

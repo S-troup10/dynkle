@@ -1,16 +1,18 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { formatMoney, keypadPress } from '@dynkle/shared';
+import { AnimatedAmount } from '@/components/AnimatedAmount';
 import { MerchantHeader } from '@/components/Header';
 import { Keypad } from '@/components/Keypad';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { SwipeTabs } from '@/components/SwipeTabs';
 import { Button, Screen, T } from '@/components/ui';
 import { startSale } from '@/lib/sale';
 import { useCart } from '@/state/cart';
 import { cartCount, cartTotal } from '@/state/cartLogic';
 import { useCheckout } from '@/state/checkout';
 import { useOffline } from '@/state/ui';
-import { colors, fonts } from '@/theme';
+import { colors, cs, fonts } from '@/theme';
 
 export default function KeypadScreen() {
   const cents = useCart((s) => s.keypadCents);
@@ -35,38 +37,39 @@ export default function KeypadScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
-      <MerchantHeader right="settings" />
-      <OfflineBanner />
-      <View style={s.display}>
-        <T v="eyebrow">Custom amount</T>
-        <Text style={s.amount} numberOfLines={1} adjustsFontSizeToFit testID="keypad-amount">
-          {formatMoney(cents)}
-        </Text>
-        {inOrder > 0 ? (
-          <T v="small" onPress={() => router.push('/order')} style={{ color: colors.orangeDeep, fontFamily: fonts.bodySemi }}>
-            {`${inOrder} ${inOrder === 1 ? 'item' : 'items'} in order · ${formatMoney(cartTotal(lines))}`}
-          </T>
-        ) : null}
-      </View>
-      <View style={s.pad}>
-        <Keypad onKey={(k) => useCart.getState().setKeypad(keypadPress(cents, k))} />
-        <Button
-          title={
-            offline ? 'Charge unavailable offline' : inOrder > 0 ? `Add ${formatMoney(cents)} to order` : `Charge ${formatMoney(cents)}`
-          }
-          onPress={charge}
-          disabled={offline || cents <= 0}
-          loading={busy}
-          testID="keypad-charge"
-        />
-      </View>
-    </Screen>
+    <SwipeTabs current="keypad">
+      <Screen edges={['top']}>
+        <MerchantHeader right="settings" />
+        <OfflineBanner />
+        <View style={s.display}>
+          <T v="eyebrow">Custom amount</T>
+          <AnimatedAmount value={formatMoney(cents)} style={s.amount} testID="keypad-amount" />
+          {inOrder > 0 ? (
+            <T v="small" onPress={() => router.push('/order')} style={{ color: colors.orangeDeep, fontFamily: fonts.bodySemi }}>
+              {`${inOrder} ${inOrder === 1 ? 'item' : 'items'} in order · ${formatMoney(cartTotal(lines))}`}
+            </T>
+          ) : null}
+        </View>
+        <View style={s.pad}>
+          <Keypad keyHeight={cs(66, 58)} onKey={(k) => useCart.getState().setKeypad(keypadPress(cents, k))} />
+          <Button
+            title={
+              offline ? 'Charge unavailable offline' : inOrder > 0 ? `Add ${formatMoney(cents)} to order` : `Charge ${formatMoney(cents)}`
+            }
+            onPress={charge}
+            disabled={offline || cents <= 0}
+            loading={busy}
+            style={{ height: cs(68, 62) }}
+            testID="keypad-charge"
+          />
+        </View>
+      </Screen>
+    </SwipeTabs>
   );
 }
 
 const s = StyleSheet.create({
-  display: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 20 },
-  amount: { fontFamily: fonts.displayHeavy, fontSize: 58, letterSpacing: -1, color: colors.ink },
-  pad: { paddingHorizontal: 20, paddingBottom: 16, gap: 14 },
+  display: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: cs(8, 4), paddingHorizontal: 20 },
+  amount: { fontFamily: fonts.displayHeavy, fontSize: cs(58, 44), letterSpacing: -1, color: colors.ink },
+  pad: { paddingHorizontal: 20, paddingBottom: cs(16, 10), gap: cs(14, 8) },
 });

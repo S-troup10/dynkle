@@ -1,7 +1,7 @@
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressScale } from '@/components/ui/motion';
 import { haptics } from '@/lib/haptics';
-import { colors, fonts, radius, shadows } from '@/theme';
+import { colors, cs, fonts, radius, shadows } from '@/theme';
 import { Icon } from './Icon';
 
 const MONEY_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'];
@@ -81,8 +81,8 @@ function Key({
 }
 
 const s = StyleSheet.create({
-  grid: { gap: 10 },
-  row: { flexDirection: 'row', gap: 10 },
+  grid: { gap: cs(10, 6) },
+  row: { flexDirection: 'row', gap: cs(10, 6) },
   cell: { flex: 1 },
   key: {
     borderRadius: radius.key,
@@ -91,6 +91,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     ...shadows.card,
   },
-  keyText: { fontFamily: fonts.display, fontSize: 24, color: colors.ink },
-  delText: { fontFamily: fonts.bodySemi, fontSize: 17, color: colors.ink },
+  keyText: { fontFamily: fonts.display, fontSize: cs(24, 20), color: colors.ink },
+  delText: { fontFamily: fonts.bodySemi, fontSize: cs(17, 15), color: colors.ink },
 });

@@ -74,7 +74,7 @@ export default function Settings() {
             testID="settings-sound"
           />
           <Row label="Brightness" value="Auto" />
-          <Row label="Tips" value={`${settings.tipsEnabled ? 'On' : 'Off'} · set in dashboard`} />
+          <Row label="Tips" value={`${settings.tipsEnabled ? 'On' : 'Off'} · edit in Admin`} />
           <Row
             label="Software update"
             value="Up to date"

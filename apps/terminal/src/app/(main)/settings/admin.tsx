@@ -101,6 +101,18 @@ export default function Admin() {
           />
         </List>
 
+        <SectionLabel>PAYMENTS</SectionLabel>
+        <List>
+          <Row
+            icon="tag"
+            label="Tips"
+            sub="Turn the tip prompt on or off, and set the preset amounts"
+            chevron
+            onPress={act(() => router.push('/settings/tips'))}
+            testID="manage-tips"
+          />
+        </List>
+
         <SectionLabel>DEVELOPER</SectionLabel>
         <List>
           <Row

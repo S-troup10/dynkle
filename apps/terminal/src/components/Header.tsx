@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSession } from '@/state/session';
 import { useOffline } from '@/state/ui';
-import { colors, fonts } from '@/theme';
+import { colors, cs, fonts } from '@/theme';
 import { IconButton, Pill } from './ui';
 
 /** "Dynkle Café  • Till 2   [settings]" — the top bar on the main tabs and checkout. */
@@ -83,7 +83,7 @@ export function BackHeader({
 
 const s = StyleSheet.create({
   bar: {
-    height: 68,
+    height: cs(68, 56),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -91,7 +91,7 @@ const s = StyleSheet.create({
     gap: 12,
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 12, flexShrink: 1 },
-  biz: { fontFamily: fonts.display, fontSize: 16, color: colors.ink, flexShrink: 1 },
+  biz: { fontFamily: fonts.display, fontSize: cs(16, 15), color: colors.ink, flexShrink: 1 },
   eyebrow: { fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.muted, letterSpacing: 0.5 },
-  title: { fontFamily: fonts.display, fontSize: 22, color: colors.ink },
+  title: { fontFamily: fonts.display, fontSize: cs(22, 19), color: colors.ink },
 });

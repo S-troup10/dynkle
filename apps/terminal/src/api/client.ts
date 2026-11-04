@@ -45,6 +45,12 @@ export interface RequestOptions {
   /** Retry when the dashboard can't be reached. Defaults to GETs and idempotent requests only. */
   retry?: boolean;
   timeoutMs?: number;
+  /**
+   * A 401 from this call means something other than "this device's token is bad"
+   * (e.g. a staff PIN check) — don't bounce the terminal back to pairing over it.
+   * The caller handles its own 401 instead.
+   */
+  authFailureIsLocal?: boolean;
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -119,7 +125,7 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
       (json as { message?: string; error?: string }).message ?? (json as { error?: string }).error ?? `Request failed (${res.status})`;
     const code = (json as { error?: string }).error;
     log.warn('Request rejected', { method, path, status: res.status, error: message });
-    if (res.status === 401 && (opts.auth ?? true) && !opts.token && useSession.getState().token) {
+    if (res.status === 401 && (opts.auth ?? true) && !opts.token && !opts.authFailureIsLocal && useSession.getState().token) {
       useSession.getState().markUnpaired();
     }
     throw new ApiError(res.status, message, code);
@@ -153,7 +159,7 @@ export const api = {
   unpair: () => request<{ success: boolean }>('POST', '/api/terminals/me/unpair'),
   verifyAdmin: async (pin: string): Promise<{ ok: boolean }> => {
     try {
-      await request<{ valid: boolean }>('POST', '/api/terminals/me/staff/verify', { body: { pin } });
+      await request<{ valid: boolean }>('POST', '/api/terminals/me/staff/verify', { body: { pin }, authFailureIsLocal: true });
       return { ok: true };
     } catch (e) {
       if ((e as ApiError).status === 401) return { ok: false };

@@ -47,7 +47,13 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "scheme": "dynkle",
     "experiments": {

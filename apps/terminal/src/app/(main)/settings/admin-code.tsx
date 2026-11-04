@@ -6,7 +6,7 @@ import { BackHeader } from '@/components/Header';
 import { Keypad } from '@/components/Keypad';
 import { Button, IconBadge, Screen, T } from '@/components/ui';
 import { touchAdmin } from '@/hooks/useAdmin';
-import { colors, fonts } from '@/theme';
+import { colors, compact, cs, fonts } from '@/theme';
 
 const LENGTH = 6;
 
@@ -43,9 +43,11 @@ export default function AdminCode() {
     <Screen>
       <BackHeader />
       <View style={s.top}>
-        <IconBadge name="lock" tone="dark" size={64} />
+        <IconBadge name="lock" tone="dark" size={cs(64, 44)} />
         <Text style={s.title}>Admin code</Text>
-        <T style={{ textAlign: 'center' }}>Set by the owner in the merchant dashboard under Devices.</T>
+        <T style={{ textAlign: 'center', fontSize: cs(15, 13), lineHeight: cs(22, 18) }}>
+          Set by the owner in the merchant dashboard under Devices.
+        </T>
         <View style={s.dots} testID="pin-dots">
           {Array.from({ length: LENGTH }, (_, i) => (
             <View key={i} style={[s.dot, i < pin.length && s.dotOn]} />
@@ -53,8 +55,8 @@ export default function AdminCode() {
         </View>
         {error ? <Text style={s.error}>{error}</Text> : null}
       </View>
-      <View style={{ paddingHorizontal: 20, paddingBottom: 20, gap: 14 }}>
-        <Keypad mode="pin" onKey={press} keyHeight={62} />
+      <View style={{ paddingHorizontal: 20, paddingBottom: compact ? 12 : 20, gap: cs(14, 8) }}>
+        <Keypad mode="pin" onKey={press} keyHeight={cs(62, 50)} />
         <Button title="Unlock" disabled={pin.length < 4} loading={busy} onPress={unlock} testID="unlock" />
       </View>
     </Screen>
@@ -62,10 +64,10 @@ export default function AdminCode() {
 }
 
 const s = StyleSheet.create({
-  top: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 28 },
-  title: { fontFamily: fonts.display, fontSize: 26, color: colors.ink, marginTop: 10 },
-  dots: { flexDirection: 'row', gap: 14, marginTop: 18 },
-  dot: { width: 14, height: 14, borderRadius: 7, borderWidth: 1.5, borderColor: 'rgba(33,35,32,0.25)' },
+  top: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: cs(10, 6), paddingHorizontal: 28 },
+  title: { fontFamily: fonts.display, fontSize: cs(26, 21), color: colors.ink, marginTop: cs(10, 4) },
+  dots: { flexDirection: 'row', gap: cs(14, 10), marginTop: cs(18, 10) },
+  dot: { width: cs(14, 11), height: cs(14, 11), borderRadius: cs(7, 6), borderWidth: 1.5, borderColor: 'rgba(33,35,32,0.25)' },
   dotOn: { backgroundColor: colors.ink, borderColor: colors.ink },
   error: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.red, marginTop: 6 },
 });

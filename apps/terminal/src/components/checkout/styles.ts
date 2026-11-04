@@ -1,19 +1,11 @@
 import { StyleSheet } from 'react-native';
-import { colors, fonts, shadows } from '@/theme';
+import { colors, cs, fonts, radius, shadows } from '@/theme';
 
 export const s = StyleSheet.create({
-  armed: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  armedDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.orange,
-    borderWidth: 2,
-    borderColor: colors.orangeGlow,
-  },
-  armedText: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.orangeDeep },
-  armedBody: { flex: 1, paddingHorizontal: 20, gap: 14, justifyContent: 'center' },
-  armedAmount: { fontFamily: fonts.displayHeavy, fontSize: 52, letterSpacing: -1, color: colors.ink },
+  armedTop: { paddingHorizontal: 16, paddingTop: 10 },
+  armedBody: { flex: 1, paddingHorizontal: 20, gap: cs(14, 8), justifyContent: 'center' },
+  armedAmount: { fontFamily: fonts.displayHeavy, fontSize: cs(58, 46), letterSpacing: -1, color: colors.ink },
+  nfcRing: { alignSelf: 'center', borderRadius: radius.sheet + 10, borderWidth: 3, borderColor: colors.orange, padding: 6 },
   dashPill: {
     alignSelf: 'center',
     flexDirection: 'row',
@@ -25,10 +17,7 @@ export const s = StyleSheet.create({
     paddingHorizontal: 14,
   },
   dashPillText: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.white },
-  dynkBox: { alignItems: 'center', backgroundColor: colors.ink, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 16, gap: 2 },
-  dynkLabel: { fontFamily: fonts.bodyMedium, fontSize: 12, letterSpacing: 0.5, color: 'rgba(255,255,255,0.75)' },
-  dynkAmount: { fontFamily: fonts.displayHeavy, fontSize: 26, color: colors.orange },
-  caption: { textAlign: 'center', color: colors.ink, fontSize: 14, lineHeight: 20 },
+  caption: { textAlign: 'center', color: colors.ink, fontSize: cs(14, 13), lineHeight: cs(20, 18) },
   headerAmount: { fontFamily: fonts.display, fontSize: 16, color: colors.ink },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, gap: 6 },
   phone: {

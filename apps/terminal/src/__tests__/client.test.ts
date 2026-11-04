@@ -72,6 +72,12 @@ describe('api client', () => {
     expect(useSession.getState().phase).toBe('unpaired');
   });
 
+  it('does not unpair the terminal over a wrong admin PIN', async () => {
+    fetchMock.mockReturnValue(json(401, { error: 'Invalid PIN' }));
+    await expect(api.verifyAdmin('0000')).resolves.toEqual({ ok: false });
+    expect(useSession.getState().phase).toBe('paired');
+  });
+
   it('passes the dashboard error message through', async () => {
     fetchMock.mockReturnValue(json(409, { error: 'Payment is paid' }));
     await expect(api.cancelPayment('pay_1')).rejects.toMatchObject({ status: 409, message: 'Payment is paid' });

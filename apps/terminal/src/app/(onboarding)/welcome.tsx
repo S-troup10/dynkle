@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Button, Screen, T } from '@/components/ui';
-import { colors, fonts, shadows } from '@/theme';
+import { colors, compact, cs, fonts, shadows } from '@/theme';
 
 export default function Welcome() {
   return (
@@ -33,13 +33,19 @@ const s = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 999,
     paddingHorizontal: 14,
-    height: 34,
-    marginBottom: 28,
+    height: cs(34, 28),
+    marginBottom: cs(28, 14),
     ...shadows.card,
   },
   dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.orange },
-  badgeText: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.ink },
-  hero: { fontFamily: fonts.displayHeavy, fontSize: 72, lineHeight: 78, letterSpacing: -2, color: colors.ink },
-  copy: { fontSize: 17, lineHeight: 26, marginTop: 28, maxWidth: 340 },
-  footer: { paddingHorizontal: 24, paddingBottom: 24 },
+  badgeText: { fontFamily: fonts.bodyMedium, fontSize: cs(14, 12), color: colors.ink },
+  hero: {
+    fontFamily: fonts.displayHeavy,
+    fontSize: cs(72, 44),
+    lineHeight: cs(78, 48),
+    letterSpacing: -2,
+    color: colors.ink,
+  },
+  copy: { fontSize: cs(17, 14), lineHeight: cs(26, 20), marginTop: cs(28, 14), maxWidth: 340 },
+  footer: { paddingHorizontal: 24, paddingBottom: compact ? 12 : 24 },
 });

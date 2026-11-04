@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, fonts, radius, shadows } from '@/theme';
+import { colors, cs, fonts, radius, shadows } from '@/theme';
 
 /**
  * Text never grows past this multiple of its design size. The terminal's layout is
@@ -13,7 +13,7 @@ export const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center' },
   button: {
-    height: 60,
+    height: cs(60, 50),
     borderRadius: radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   buttonDisabled: { backgroundColor: colors.disabled, shadowOpacity: 0, elevation: 0, borderWidth: 0 },
-  buttonText: { fontFamily: fonts.bodySemi, fontSize: 18 },
+  buttonText: { fontFamily: fonts.bodySemi, fontSize: cs(18, 16) },
   ghost: { alignSelf: 'center', paddingVertical: 12, paddingHorizontal: 16 },
   ghostText: { fontFamily: fonts.bodySemi, fontSize: 16, color: colors.ink, textDecorationLine: 'underline' },
   iconButton: {

@@ -5,7 +5,7 @@ import { api } from '@/api/client';
 import { Icon } from '@/components/Icon';
 import { Button, Card, Divider, Halo, Screen, T } from '@/components/ui';
 import { useSession } from '@/state/session';
-import { colors, fonts, shadows } from '@/theme';
+import { colors, cs, fonts, shadows } from '@/theme';
 
 export default function Paired() {
   const profile = useSession((s) => s.profile);
@@ -48,12 +48,19 @@ function Line({ label, value }: { label: string; value: string }) {
 }
 
 const s = StyleSheet.create({
-  body: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, gap: 14 },
-  check: { width: 92, height: 92, borderRadius: 46, backgroundColor: colors.orange, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: fonts.display, fontSize: 32, color: colors.ink, marginTop: 8 },
-  card: { alignSelf: 'stretch', padding: 0, marginTop: 12 },
-  biz: { fontFamily: fonts.display, fontSize: 18, color: colors.ink, padding: 20 },
-  line: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, height: 52, alignItems: 'center' },
+  body: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, gap: cs(14, 8) },
+  check: {
+    width: cs(92, 68),
+    height: cs(92, 68),
+    borderRadius: cs(46, 34),
+    backgroundColor: colors.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: { fontFamily: fonts.display, fontSize: cs(32, 24), color: colors.ink, marginTop: cs(8, 4) },
+  card: { alignSelf: 'stretch', padding: 0, marginTop: cs(12, 6) },
+  biz: { fontFamily: fonts.display, fontSize: 18, color: colors.ink, padding: cs(20, 14) },
+  line: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, height: cs(52, 44), alignItems: 'center' },
   lineLabel: { fontFamily: fonts.body, fontSize: 15, color: colors.muted },
   lineValue: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.ink },
 });

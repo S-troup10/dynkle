@@ -16,6 +16,7 @@ export interface NetworkSelection {
 /** WiFi / Mobile data picker from the "Get online" setup screen. */
 export function NetworkPicker({ value, onChange }: { value: NetworkSelection; onChange: (v: NetworkSelection) => void }) {
   const [networks, setNetworks] = useState<WifiNetwork[] | null>(null);
+  const [hasSim, setHasSim] = useState(false);
   const netType = useUi((s) => s.netType);
   const connected = useUi((s) => s.netConnected);
 
@@ -32,27 +33,31 @@ export function NetworkPicker({ value, onChange }: { value: NetworkSelection; on
         }
       })
       .catch(() => alive && setNetworks([]));
+    Promise.resolve(wifi.hasSim()).then((v) => alive && setHasSim(v));
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // No SIM in the device: mobile data isn't a real option, so don't show the toggle at all.
   return (
     <View style={{ gap: 16 }}>
-      <View style={s.segment}>
-        {(['wifi', 'mobile'] as const).map((m) => {
-          const on = value.mode === m;
-          return (
-            <Pressable key={m} onPress={() => onChange({ ...value, mode: m })} style={[s.segBtn, on && s.segOn]} testID={`net-${m}`}>
-              <Icon name={m === 'wifi' ? 'wifi' : 'sim'} size={18} color={on ? colors.white : colors.ink} strokeWidth={2} />
-              <Text style={[s.segText, on && { color: colors.white }]}>{m === 'wifi' ? 'WiFi' : 'Mobile data'}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {hasSim ? (
+        <View style={s.segment}>
+          {(['wifi', 'mobile'] as const).map((m) => {
+            const on = value.mode === m;
+            return (
+              <Pressable key={m} onPress={() => onChange({ ...value, mode: m })} style={[s.segBtn, on && s.segOn]} testID={`net-${m}`}>
+                <Icon name={m === 'wifi' ? 'wifi' : 'sim'} size={18} color={on ? colors.white : colors.ink} strokeWidth={2} />
+                <Text style={[s.segText, on && { color: colors.white }]}>{m === 'wifi' ? 'WiFi' : 'Mobile data'}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
 
-      {value.mode === 'mobile' ? (
+      {value.mode === 'mobile' && hasSim ? (
         <View style={s.card}>
           <View style={s.row}>
             <Icon name="sim" size={22} color={colors.orange} />
