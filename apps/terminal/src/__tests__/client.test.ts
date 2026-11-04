@@ -25,10 +25,10 @@ async function settle<T>(p: Promise<T>): Promise<T> {
 
 describe('api client', () => {
   it('sends the device token and app version', async () => {
-    fetchMock.mockReturnValue(json(200, { ok: true }));
+    fetchMock.mockReturnValue(json(200, { success: true }));
     await api.unpair();
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://dash/terminal/unpair');
+    expect(url).toBe('http://dash/api/terminals/me/unpair');
     expect(init.headers.authorization).toBe('Bearer tok');
     expect(init.headers['x-dynkle-app-version']).toBeTruthy();
   });
@@ -44,12 +44,23 @@ describe('api client', () => {
   });
 
   it('retries a charge with the same idempotency key until it gets through', async () => {
+    const order = {
+      id: 'pay_1',
+      totalCents: 500,
+      currency: 'AUD',
+      status: 'OPEN',
+      expiresAt: new Date().toISOString(),
+      ttlSeconds: 90,
+      claimed: false,
+      paymentUrl: 'solana:pay',
+      acceptedTokens: ['USDC'],
+    };
     fetchMock
       .mockRejectedValueOnce(new TypeError('Network request failed'))
       .mockRejectedValueOnce(new TypeError('Network request failed'))
-      .mockReturnValue(json(200, { id: 'pay_1' }));
+      .mockReturnValue(json(200, { order }));
     const p = api.createPayment({ lines: [], subtotalCents: 500, tipCents: 0 }, 'key-1');
-    await expect(settle(p)).resolves.toEqual({ id: 'pay_1' });
+    await expect(settle(p)).resolves.toMatchObject({ id: 'pay_1', totalCents: 500, status: 'armed' });
     expect(fetchMock).toHaveBeenCalledTimes(3);
     const keys = fetchMock.mock.calls.map(([, init]) => init.headers['idempotency-key']);
     expect(keys).toEqual(['key-1', 'key-1', 'key-1']);

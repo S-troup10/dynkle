@@ -1,79 +1,70 @@
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import type { PairingCode } from '@dynkle/shared';
+import type { TerminalProfile } from '@dynkle/shared';
 import { api } from '@/api/client';
 import { BackHeader } from '@/components/Header';
 import { Icon } from '@/components/Icon';
 import { Button, Card, Headline, Screen, T } from '@/components/ui';
-import { useCountdown } from '@/hooks/useCountdown';
-import { formatCountdown } from '@/lib/format';
+import { APP_VERSION } from '@/lib/config';
 import { wifi } from '@/native/hardware';
 import { useSession } from '@/state/session';
 import { useUi } from '@/state/ui';
 import { colors, fonts, shadows } from '@/theme';
 
+/**
+ * The dashboard (Devices → Add terminal) mints the pairing code; this screen
+ * is where the device enters it along with its own keypair (see
+ * src/devices/deviceRoutes.js `POST /pair` on the backend).
+ */
 export default function Pair() {
-  const [code, setCode] = useState<PairingCode | null>(null);
+  const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [editingServer, setEditingServer] = useState(false);
   const apiUrl = useSession((s) => s.apiUrl);
   const [serverDraft, setServerDraft] = useState(apiUrl);
-  const left = useCountdown(code?.expiresAt);
-  const done = useRef(false);
 
-  const [attempt, setAttempt] = useState(0);
-  const retry = () => setAttempt((n) => n + 1);
-
-  // Fetch a fresh code on mount, on retry, and when the dashboard address changes.
-  useEffect(() => {
-    let alive = true;
-    api
-      .createPairingCode()
-      .then((fresh) => {
-        if (!alive) return;
-        setError(null);
-        setCode(fresh);
-      })
-      .catch((e: Error) => {
-        if (!alive) return;
-        setCode(null);
-        setError(e.message);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [attempt, apiUrl]);
-
-  // Poll until the dashboard claims the code; swap in a new one when it lapses.
-  useEffect(() => {
-    if (!code) return;
-    const t = setInterval(async () => {
-      if (Date.parse(code.expiresAt) <= Date.now()) {
-        clearInterval(t);
-        retry();
-        return;
-      }
-      try {
-        const latest = await api.pollPairingCode(code.code);
-        if (latest.status === 'claimed' && latest.token && !done.current) {
-          done.current = true;
-          clearInterval(t);
-          const profile = await api.me(latest.token);
-          useSession.getState().completePairing(latest.token, profile);
-          router.replace('/paired');
-        } else if (latest.status === 'expired') {
-          clearInterval(t);
-          retry();
-        }
-      } catch {
-        // Keep polling; a blip shouldn't throw the code away.
-      }
-    }, 1500);
-    return () => clearInterval(t);
-  }, [code]);
-
-  const chars = (code?.code ?? '······').split('');
+  const submit = async () => {
+    const value = code.trim().toUpperCase();
+    if (!value) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await api.pair(value, { model: 'FP9810', appVersion: APP_VERSION, osVersion: `${Platform.OS} ${Platform.Version}` });
+      const profile: TerminalProfile = {
+        merchant: {
+          id: result.merchantId,
+          name: result.merchantName,
+          legalName: result.merchantName,
+          abn: '',
+          address: '',
+          phone: '',
+          email: '',
+          walletAddress: '',
+          timezone: 'Australia/Sydney',
+        },
+        till: { id: result.terminalId, name: result.counterLabel },
+        settings: {
+          tipsEnabled: true,
+          tipPresets: [0, 10, 15, 20],
+          currency: 'AUD',
+          soundEnabled: true,
+          priceLockSeconds: 90,
+          dynkPerAud: 1,
+        },
+        serial: result.serialNumber ?? result.deviceId,
+        appVersion: APP_VERSION,
+        firmwareVersion: 'n/a',
+      };
+      useSession.getState().completePairing(result.token, profile, result.deviceId);
+      router.replace('/paired');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Screen>
@@ -82,27 +73,30 @@ export default function Pair() {
         <Headline size={28} accent="dashboard">
           Pair with your
         </Headline>
-        <T style={{ marginTop: 8, marginBottom: 20 }}>Enter this code in the merchant dashboard to link this terminal to your business.</T>
+        <T style={{ marginTop: 8, marginBottom: 20 }}>
+          In the merchant dashboard, go to Devices → Add terminal to get a pairing code, then enter it below.
+        </T>
 
         <View style={s.codeCard}>
-          <View style={s.codeRow} testID="pairing-code" accessibilityLabel={code?.code}>
-            {chars.map((c, i) => (
-              <View key={i} style={[s.tile, i === 3 && { marginLeft: 12 }]}>
-                <Text style={s.tileText}>{c}</Text>
-              </View>
-            ))}
-          </View>
-          {error ? (
-            <View style={{ gap: 10, alignItems: 'center' }}>
-              <Text style={[s.status, { color: colors.red }]}>{error}</Text>
-              <Button title="Try again" kind="secondary" onPress={retry} style={{ height: 44, alignSelf: 'stretch' }} />
-            </View>
-          ) : (
-            <View style={s.statusRow}>
-              <View style={s.orangeDot} />
-              <Text style={s.status}>Waiting for dashboard · new code in {formatCountdown(left)}</Text>
-            </View>
-          )}
+          <TextInput
+            value={code}
+            onChangeText={(v) => setCode(v.toUpperCase())}
+            placeholder="XXXX-XXXX"
+            placeholderTextColor={colors.muted}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            maxLength={16}
+            style={s.input}
+            testID="pairing-code-input"
+          />
+          {error ? <Text style={[s.status, { color: colors.red }]}>{error}</Text> : null}
+          <Button
+            title={busy ? 'Pairing…' : 'Pair this terminal'}
+            kind="dark"
+            onPress={submit}
+            disabled={busy || !code.trim()}
+            style={{ height: 48 }}
+          />
         </View>
 
         <View style={{ gap: 18, marginTop: 24 }}>
@@ -110,7 +104,7 @@ export default function Pair() {
           <Step n={2}>
             Go to <Text style={s.bold}>Devices</Text>, then <Text style={s.bold}>Add terminal</Text>.
           </Step>
-          <Step n={3}>Type in the code above and give this till a name.</Step>
+          <Step n={3}>Type the code shown there into this screen.</Step>
         </View>
 
         <Pressable onPress={() => setEditingServer((v) => !v)} style={{ marginTop: 24 }} testID="server-toggle">
@@ -123,7 +117,7 @@ export default function Pair() {
               onChangeText={setServerDraft}
               autoCapitalize="none"
               autoCorrect={false}
-              style={s.input}
+              style={s.serverInput}
               testID="server-input"
             />
             <Button
@@ -179,20 +173,20 @@ const s = StyleSheet.create({
     gap: 14,
     borderWidth: 1,
     borderColor: colors.hairline,
-  },
-  codeRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  tile: {
-    width: 46,
-    height: 60,
-    borderRadius: 14,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
     ...shadows.card,
   },
-  tileText: { fontFamily: fonts.displayHeavy, fontSize: 26, color: colors.ink },
-  statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  orangeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.orange, borderWidth: 2, borderColor: colors.orangeGlow },
+  input: {
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.line,
+    paddingHorizontal: 16,
+    fontFamily: fonts.displayHeavy,
+    fontSize: 22,
+    letterSpacing: 2,
+    textAlign: 'center',
+    color: colors.ink,
+  },
   status: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
   stepNum: {
     width: 24,
@@ -218,7 +212,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.fill,
   },
   change: { fontFamily: fonts.bodySemi, fontSize: 15, color: colors.ink, textDecorationLine: 'underline' },
-  input: {
+  serverInput: {
     height: 46,
     borderRadius: 12,
     borderWidth: 1,

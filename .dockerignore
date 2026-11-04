@@ -1,6 +1,0 @@
-**/node_modules
-.git
-apps/terminal
-e2e
-design
-**/*.test.ts

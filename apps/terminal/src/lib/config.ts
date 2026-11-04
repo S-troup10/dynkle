@@ -1,16 +1,16 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-/** The mock merchant dashboard deployed on Render (see render.yaml). */
-export const HOSTED_DASHBOARD_URL = 'https://dynkle-mock.onrender.com';
+/** The Dynkle POS backend (Express + Prisma + Postgres) deployed on Render. */
+export const HOSTED_DASHBOARD_URL = 'https://dynkle-api.onrender.com';
 
-/** Where the merchant dashboard (the mock server in V1) lives. */
+/** Where the Dynkle API lives. */
 export function defaultApiUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
-  // Local web preview talks to the local mock server (npm run server).
+  // Local web preview talks to a locally-run backend (see dynkle-api-main/README.md).
   if (Platform.OS === 'web' && typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-    return `http://${window.location.hostname}:4000`;
+    return `http://${window.location.hostname}:4100`;
   }
   return HOSTED_DASHBOARD_URL;
 }

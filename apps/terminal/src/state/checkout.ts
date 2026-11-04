@@ -21,6 +21,8 @@ interface CheckoutState {
   busy: boolean;
   error: string | null;
   begin: (draft: Draft) => void;
+  /** A charge armed by the backend itself (e.g. another counter or the website), not by this terminal. */
+  beginRemote: (payment: PaymentSession) => void;
   arm: (tipCents: number) => Promise<PaymentSession | null>;
   rearm: () => Promise<PaymentSession | null>;
   cancel: () => Promise<void>;
@@ -57,6 +59,16 @@ export const useCheckout = create<CheckoutState>((set, get) => ({
   error: null,
 
   begin: (draft) => set({ draft, tipCents: 0, payment: null, error: null }),
+
+  beginRemote: (payment) =>
+    set({
+      draft: { lines: payment.lines, subtotalCents: payment.subtotalCents, reference: payment.reference, source: 'dashboard' },
+      tipCents: payment.tipCents,
+      payment,
+      incoming: null,
+      busy: false,
+      error: null,
+    }),
 
   arm: async (tipCents) => {
     const { draft } = get();

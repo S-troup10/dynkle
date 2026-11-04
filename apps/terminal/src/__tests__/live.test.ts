@@ -7,11 +7,14 @@ import { payment } from '@/__fixtures__/payments';
 
 class FakeSocket {
   static all: FakeSocket[] = [];
+  static readonly OPEN = 1;
+  readyState = FakeSocket.OPEN;
   onopen: (() => void) | null = null;
   onmessage: ((m: { data: string }) => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
   closed = false;
+  sent: unknown[] = [];
   constructor(public url: string) {
     FakeSocket.all.push(this);
   }
@@ -21,7 +24,12 @@ class FakeSocket {
   open() {
     this.onopen?.();
   }
-  send(event: object) {
+  /** The code under test sending a frame out (HELLO, HEARTBEAT, ACK…). */
+  send(data: string) {
+    this.sent.push(JSON.parse(data));
+  }
+  /** The server pushing a frame in, for the test to simulate. */
+  emit(event: object) {
     this.onmessage?.({ data: JSON.stringify(event) });
   }
 }
@@ -41,14 +49,22 @@ afterEach(() => {
 });
 
 describe('live connection', () => {
-  it('connects with the token and routes payment updates into checkout', () => {
+  it('connects with the token, sends HELLO, and routes order-status updates into checkout', () => {
     stop = startLiveConnection(new QueryClient(), { watchDevice: false });
-    expect(latest().url).toBe('wss://dash/ws?token=tok');
+    expect(latest().url).toBe('wss://dash/ws/terminal?token=tok');
     latest().open();
     expect(useUi.getState().socket).toBe('open');
-    useCheckout.setState({ payment: payment() });
-    latest().send({ type: 'payment.status', payment: payment({ status: 'wallet_connected' }) });
-    expect(useCheckout.getState().payment?.status).toBe('wallet_connected');
+    expect(latest().sent[0]).toMatchObject({ type: 'HELLO' });
+    const current = payment({ id: 'ord_1', status: 'armed' });
+    useCheckout.setState({ payment: current });
+    latest().emit({
+      v: 2,
+      type: 'ORDER_STATUS',
+      id: 'm1',
+      payload: { orderId: 'ord_1', status: 'PROCESSING', totalCents: current.totalCents },
+    });
+    expect(useCheckout.getState().payment?.status).toBe('confirming');
+    expect(latest().sent.some((m) => (m as { type: string }).type === 'ACK')).toBe(true);
   });
 
   it('treats a silent socket as dead and reconnects', () => {
@@ -56,7 +72,7 @@ describe('live connection', () => {
     const first = latest();
     first.open();
     jest.advanceTimersByTime(800);
-    first.send({ type: 'heartbeat', at: new Date().toISOString() }); // keeps it alive
+    first.emit({ v: 2, type: 'HEARTBEAT_ACK', id: 'h1' }); // keeps it alive
     jest.advanceTimersByTime(800);
     expect(first.closed).toBe(false);
     jest.advanceTimersByTime(300); // 1000ms since the last frame

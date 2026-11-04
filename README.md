@@ -1,31 +1,30 @@
 # Dynkle
 
-Dynkle is the software for DYNK's crypto point-of-sale terminal. It's an Android app that runs in kiosk mode on a counter terminal with NFC, a camera, Bluetooth and WiFi. Merchants ring up a sale on the terminal, and customers pay in crypto on Solana by tapping their phone, scanning a QR code, or connecting with the DYNK app.
+Dynkle is the software for DYNK's crypto point-of-sale terminal. It's an Android app that runs in kiosk mode on a counter terminal with NFC, a camera, Bluetooth and WiFi. Merchants ring up a sale on the terminal, and customers pay in crypto on Solana by tapping their phone, scanning a QR code, or connecting with a Solana wallet.
 
-This repo is **V1**. It contains the full terminal app and a **mock merchant dashboard**, so the whole flow can be tested in isolation.
+The terminal talks to the real [dynkle-api](https://github.com/Dynk-IO/dynkle-api) backend (Express + Prisma + Postgres) over its device API (`src/devices/deviceRoutes.js` there), not a server in this repo. An earlier, self-contained mock backend (`apps/mock-server`) is kept on the `archive/mock-server-backend` branch for reference.
 
 ```
 apps/terminal      Expo (React Native) terminal app — Android kiosk + web preview
-apps/mock-server   Mock merchant dashboard: REST + WebSocket + /dev control panel
-packages/shared    Domain types, money/GST and catalog helpers shared by both
+packages/shared    Domain types, money/GST and catalog helpers used by the app
 design/            The terminal design (31 screens) the app is built from
-e2e/               Playwright walk-through of every flow against the web build
 ```
 
 ## Quick start
 
 ```sh
 npm install
-npm run server        # mock dashboard on http://localhost:4000 (dev panel at /dev)
 npm run web           # terminal app in the browser on http://localhost:8081
 ```
+
+By default the app points at the hosted backend, **https://dynkle-api.onrender.com**. To use a local backend instead, run the [dynkle-api](https://github.com/Dynk-IO/dynkle-api) server (see its README) and build with `EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:4100`. You can also change the backend address on the pairing screen (tap the "Dashboard: …" line) or under **Admin → Dashboard server**.
 
 To use it:
 
 1. Open the app at 400×800 to match the terminal screen.
-2. Go through onboarding until a pairing code appears.
-3. On http://localhost:4000/dev, click **Use** next to the code. The terminal pairs on its own.
-4. Ring up sales. The dev panel acts as the customer's wallet: connect, approve, decline or let the charge expire. It also acts as the dashboard: send a charge to the terminal, toggle tips, add menu items, push an update or unpair.
+2. Go through onboarding to the pairing screen.
+3. In the Dynkle merchant dashboard, go to **Devices → Add terminal** to get a pairing code, and type it into the app.
+4. Ring up sales. The customer pays by scanning the QR / tapping NFC with a Solana wallet; the backend verifies the payment on-chain.
 
 ### On an Android terminal or emulator
 
@@ -34,21 +33,17 @@ cd apps/terminal
 npx expo run:android --variant release     # standalone build with the native modules
 ```
 
-The app connects to the hosted mock dashboard at **https://dynkle-mock.onrender.com** by default. Pair from https://dynkle-mock.onrender.com/dev (the password is `DEV_PASSWORD` in Render).
-
-To use a local server instead, build with `EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:4000`. You can also change the dashboard address on the pairing screen (tap the "Dashboard: …" line) or under **Admin → Dashboard server**.
-
 ## How the terminal works
 
 | Area                  | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pairing**           | The terminal requests a 6-character code (10-minute lifetime, refreshed automatically). It polls until the dashboard claims the code, then stores a device token. The production pairing protocol will replace this later.                                                                                                                                                                                                                                             |
+| **Pairing**           | The dashboard mints a pairing code (Devices → Add terminal); the terminal generates an EC P-256 keypair, enters the code, and sends the backend its public key. The backend returns a short-lived device token (15 min), which the app renews by signing a server-issued nonce with the stored private key — no manual re-pairing needed.                                                                                                                              |
 | **Keypad**            | Custom amounts, entered as cents (`00` key, delete). If there are already items in the order, the amount is added to it as a line.                                                                                                                                                                                                                                                                                                                                     |
-| **Items**             | Categories, groups and items with sizes, synced from the dashboard. Groups show up either as filter chips (Coffee) or as sub-categories (Food → Breads). A size picker opens for items with more than one size. The current order has steppers and shows the GST included (1/11).                                                                                                                                                                                      |
+| **Items**             | Categories and items with sizes, synced from the backend's flat product catalog (`GET /api/terminals/me/catalog`). A size picker opens for items with more than one size. The current order has steppers and shows the GST included (1/11). Adding an item from the terminal works (`POST /api/terminals/me/products`); renaming/deleting items and managing categories from the terminal isn't supported by this backend yet.                                         |
 | **Checkout**          | Tip prompt (presets plus a custom amount; skipped when tips are off), then the charge is **armed**. While armed, the QR code, NFC tap and Connect chips are live, and the price is locked for 90 seconds. Then: customer confirming → processing on Solana → **Paid**, **Failed** (retry) or **Expired** (re-arm or edit the order).                                                                                                                                   |
 | **Dashboard charges** | A charge sent from the dashboard pops up over whatever the merchant is doing, except during an active payment. Any amount already keyed in is kept and comes back afterwards. If the terminal was offline when the charge was sent, it is replayed when the terminal reconnects.                                                                                                                                                                                       |
 | **Activity**          | Today's total and counts, the list of payments, and a detail view with a receipt QR.                                                                                                                                                                                                                                                                                                                                                                                   |
-| **Settings**          | Business details, connection status (network, dashboard, NFC, Bluetooth) and terminal settings. **Admin settings** need the admin code (mock: `123456`) and lock again after 2 minutes. They cover restart, logs, forgetting networks, **managing items**, the dashboard server, unpairing and factory reset.                                                                                                                                                          |
+| **Settings**          | Business details, connection status (network, dashboard, NFC, Bluetooth) and terminal settings. **Admin settings** need the cashier PIN (`TERMINAL_STAFF_PIN` on the backend, default `1234`) and lock again after 2 minutes. They cover restart, logs, forgetting networks, **managing items**, the dashboard server, unpairing and factory reset.                                                                                                                    |
 | **System states**     | An offline banner (charging is disabled), "This terminal was unpaired" (when the dashboard removes it), and the software-update screen.                                                                                                                                                                                                                                                                                                                                |
 | **Reliability**       | API requests time out after 10 seconds. Reads, and charges sent with an `Idempotency-Key`, are retried on network errors, so a retry can't arm a second charge. The sale in progress is saved on the device: if the app restarts or crashes mid-payment, the charge comes back on screen and is re-checked with the dashboard. The live connection treats 45 seconds without a heartbeat as dead, and reconnects straight away when the network or the app comes back. |
 | **Logs**              | The terminal keeps its last 300 log entries on the device. **Admin → View logs** shows them, and **Send logs to support** uploads them to the dashboard (`POST /terminal/logs`). Crashes are logged and show a restart screen.                                                                                                                                                                                                                                         |
@@ -56,10 +51,7 @@ To use a local server instead, build with `EXPO_PUBLIC_API_URL=http://<your-LAN-
 
 ### Payment payload (QR and NFC)
 
-The mock server creates a payment session for each charge, and the payload has two layers:
-
-- **Inner layer:** `solanaPayUrl` is a Solana Pay transaction request: `solana:<url-encoded https://…/solana-pay/<id>>`. The mock server's `/solana-pay/:id` endpoint follows the spec. `GET` returns the label and icon. `POST {account}` returns a stub transaction and marks the customer's wallet as connected.
-- **Outer layer:** `qrUrl` is a DYNK universal link, `https://pay.dynk.io/p/<id>?r=<solanaPayUrl>`. The QR code and the NFC tag both carry this link. The DYNK app opens it directly, and a web fallback can hand the wrapped Solana Pay request to Phantom, Solflare or Backpack.
+The backend builds the payment link for each order (`payloadForOrder` in `src/devices/deviceHub.js`) and sends it to the terminal as `paymentUrl` — either a Solana Pay transaction request (`solana:<url-encoded .../api/solana-pay/:orderId>`) or the order's checkout page, depending on how the merchant is set up. The terminal just displays it; it never builds the link itself.
 
 On Android, `dynkle-nfc` emulates an NFC Forum Type 4 tag through host card emulation (HCE). It serves the link as an NDEF URI record, but only while a charge is armed, so phones read it like an NFC sticker.
 
@@ -75,6 +67,8 @@ In the web preview these fall back to simulated hardware. **Admin → Simulate t
 
 ## DYNK app Tap to Pay (Bluetooth)
 
+**Currently disconnected.** This feature talked to the mock server's DYNK-token endpoints (`/payments/:id/ble-session` etc.), which the real [dynkle-api](https://github.com/Dynk-IO/dynkle-api) backend doesn't implement — it has no DYNK-token rail, only Solana Pay / EVM checkout. The native Bluetooth module and the client code below are untouched and still compile; they're just never invoked, because the backend never sends a payment a `dynk` quote (`apps/terminal/src/api/mapping.ts`'s order mapping doesn't set one). Revisit this once the backend adds an equivalent rail.
+
 Tap to Pay in the DYNK app is **Bluetooth LE, not NFC**. The terminal plays the DYNK app's _receiver_: it runs a GATT server that serves a small signed session, and the customer's phone (the _sender_) connects when it's held against the terminal, reads the session, pays on Solana itself, and writes its status back. This is phase 1 of the integration spec. It works with today's DYNK app on iPhone and Android, with no app release.
 
 |                               |                                                                                                                                                                                                                                                                                                                                              |
@@ -88,88 +82,21 @@ Tap to Pay in the DYNK app is **Bluetooth LE, not NFC**. The terminal plays the 
 
 **The terminal never decides "Paid".** The dashboard checks the transaction on chain: no error, the merchant's balance of the DYNK mint went up by the charge's amount, inside the charge window, and the signature hasn't paid another charge. Underpaid → `failed` with `failureCode: "wrong_amount"` and the shortfall. Overpaid → `paid` with the excess flagged. A different token → nothing received → `wrong_amount`. A **chain watcher** also polls the merchant's token account, so a lost or garbled Bluetooth write doesn't lose a payment.
 
-**Trying it in the web preview:** the dev panel's live charge has _DYNK phone, Bluetooth Tap to Pay_ buttons: pays the right amount, types 10% less, types 1 DYNK more, sends SOL instead, confirmed write lost, fails in the app. The pretend phone checks the session the way the app does (expiry, single-use nonce, signature), "pays" on an in-memory chain, and drives the terminal's simulated Bluetooth peripheral over the live connection.
+Phase 2 (the terminal sets the amount and a charge reference in the session) needs a DYNK app and backend change, and is on hold along with the rest of this section until the real backend has a DYNK-token rail.
 
-| Variable               | What it does                                                                                                                                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MERCHANT_SOL_SECRET`  | bs58 secret key of the merchant receiving wallet. Sessions are signed, so customers see a verified merchant and pay straight away. Without it, a wallet is generated per run                    |
-| `MERCHANT_SOL_ADDRESS` | Receiving address without the key: sessions go out **unsigned**, and every customer has to confirm the address first                                                                            |
-| `SOLANA_RPC_URL`       | Real Solana JSON-RPC (e.g. Helius). Without it, payments are checked against the in-memory mock chain                                                                                           |
-| `DYNK_MINT`            | DYNK mint the customers' app pays with. Defaults to the **devnet** mint `8RscFZC7rooxRAaXGPomxwp5QqhrQMDRjvpx2qViEKoT` that the app defaults to: confirm the production mint with the DYNK team |
-| `DYNK_DECIMALS`        | Mint decimals. Read from chain when `SOLANA_RPC_URL` is set, 6 on the mock chain                                                                                                                |
+## Backend API
 
-Phase 2 (the terminal sets the amount and a charge reference in the session) needs a DYNK app and DYNK backend change and isn't built yet.
-
-## Mock dashboard API
-
-These endpoints are what the real merchant dashboard needs to provide.
-
-|                                                                    |                                                                                                                                                      |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /pairing/codes`, `GET /pairing/codes/:code`                  | Pairing code issue and poll (no auth)                                                                                                                |
-| `POST /pairing/claim {code, tillName}`                             | Dashboard claims a code                                                                                                                              |
-| `GET /terminal/me`, `POST /terminal/unpair`, `POST /admin/verify`  | Terminal profile, unpair and admin code check (bearer token)                                                                                         |
-| `POST /terminal/logs {entries}`                                    | Terminal log upload, written to the server log tagged with the till                                                                                  |
-| `GET/POST/PATCH/DELETE /catalog…`                                  | Menu: categories (with groups) and items with sizes                                                                                                  |
-| `POST /payments`, `GET /payments/:id`, `POST /payments/:id/cancel` | Payment sessions. `POST /payments` takes an `Idempotency-Key` header: a repeat returns the original payment.                                         |
-| `GET /transactions`                                                | Today's activity for the till. "Today" starts at midnight in the merchant's time zone (`merchant.timezone`).                                         |
-| `POST /remote-charges/:id/accept\|dismiss`                         | Answer a dashboard-sent charge                                                                                                                       |
-| `GET/POST /solana-pay/:id`                                         | Solana Pay transaction request (stub)                                                                                                                |
-| `WS /ws?token=`                                                    | `payment.status`, `remote_charge`, `catalog.updated`, `settings.updated`, `terminal.unpaired`, `software_update`, and a `heartbeat` every 20 seconds |
-| `/dev`, `POST /dev/…`                                              | Control panel and scriptable simulators for tests                                                                                                    |
-
-Every request body is validated against the zod schemas in `packages/shared/src/schemas.ts`. A bad body gets a `400` that names the field. The terminal's request types are inferred from the same schemas. Each request also sends the terminal's app version in `x-dynkle-app-version`, and the profile reports it back.
-
-### Server settings
-
-| Variable           | Default           | What it does                                                                                                                         |
-| ------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `PORT`, `HOST`     | `4000`, `0.0.0.0` | Where to listen                                                                                                                      |
-| `TOKEN_SECRET`     | unset             | Signs device tokens, so terminals stay paired across restarts even with nothing saved. Without it, a restart unpairs every terminal. |
-| `DATA_FILE`        | unset             | JSON file the server saves everything to (menu, payments, tills) and reloads on start                                                |
-| `DEV_PASSWORD`     | unset             | Password for `/dev`                                                                                                                  |
-| `PUBLIC_URL`       | request host      | Base URL for Solana Pay links                                                                                                        |
-| `SEED_ACTIVITY`    | `1`               | Sample history for newly paired tills (`0` turns it off)                                                                             |
-| `LOG`, `LOG_LEVEL` | on, `info`        | JSON request logs (`LOG=0` turns them off). Device tokens are redacted from logged URLs.                                             |
-
-## Deploy the mock dashboard (Render)
-
-This deploys the mock dashboard so the terminal can reach it over the internet, with no server running on your own computer.
-
-1. Push this branch, then in [Render](https://dashboard.render.com) go to **New → Blueprint**. Pick this repo and branch, then **Apply**. Render builds the `Dockerfile` described in `render.yaml`.
-2. When it's live, open **dynkle-mock → Environment** and copy `DEV_PASSWORD`. It's generated for you.
-3. Open `https://<your-service>.onrender.com/dev`. The browser asks for a login: the username can be anything, and the password is `DEV_PASSWORD`.
-4. Point the terminal at the hosted dashboard in one of two ways:
-   - At build time: put `EXPO_PUBLIC_API_URL=https://<your-service>.onrender.com` in `apps/terminal/.env.local`, then build (`npx expo run:android --variant release`).
-   - In the app: tap **Dashboard: …** on the pairing screen, or go to **Admin → Dashboard server**.
-
-The terminal API, `/ws` and `/solana-pay` stay open. Only `/dev` needs the password. Payment links use `https://` automatically behind Render's proxy.
-
-**On the free plan:**
-
-- The service sleeps after about 15 minutes with no traffic, and the first request after that takes about 30 seconds.
-- Data lives in memory, so every restart or redeploy wipes menu edits and payment history. Terminals **stay paired**: `render.yaml` generates a `TOKEN_SECRET`, and the server recognises the signed tokens it issued before the restart.
-
-To keep the data as well, add a Render disk (paid plans), mount it at `/data`, and set `DATA_FILE=/data/store.json`. The $7/month Starter plan also stays awake.
-
-Vercel won't work: it only runs short-lived serverless functions, and the mock needs a long-running process for WebSockets, in-memory state and the price-lock timers.
-
-To run the e2e walk-through against the hosted dashboard:
-`API_URL=https://<your-service>.onrender.com DEV_PASSWORD=… node e2e/web-flow.mjs`, with the web app running locally.
+The terminal's device-side API — pairing, catalog, orders, and the `/ws/terminal` live connection — is implemented by [dynkle-api](https://github.com/Dynk-IO/dynkle-api), specifically `src/devices/deviceRoutes.js`, `src/devices/deviceHub.js` and `src/devices/deviceAuth.js`. See that repo's README for the full endpoint reference, environment variables and deploy instructions. The mapping between its responses and this app's `PaymentSession` / `Catalog` types lives in `apps/terminal/src/api/mapping.ts`.
 
 ## Checks
 
 ```sh
 npm run check         # typecheck + lint + format check + all tests
-npm test              # shared + mock server (Vitest) + terminal (Jest + React Native Testing Library)
+npm test              # shared + terminal (Jest + React Native Testing Library)
 npm run typecheck
-npm run lint          # ESLint: server/shared/e2e (eslint.config.mjs) and the terminal (Expo config)
+npm run lint          # ESLint: shared (eslint.config.mjs) and the terminal (Expo config)
 npm run format        # Prettier (format:check to verify)
-npm run build:server  # bundle the mock server to apps/mock-server/dist (what the Docker image runs)
-node e2e/web-flow.mjs # with server + web running; needs Playwright (SHOTS=dir saves screenshots)
 ```
-
-GitHub Actions (`.github/workflows/ci.yml`) runs the checks and the e2e walk-through on every pull request.
 
 ## Not in V1
 
